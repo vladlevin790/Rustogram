@@ -71,7 +71,7 @@ export default function DefaultLayout() {
           <a onClick={onLogout} className="font-bold text-[30px] hover:text-gray-500" href="#">Выйти</a>
         </div>
       </aside>
-      <div className="ml-[394px]">
+      <div className="ml-[480px]">
         <main>
           <Outlet user={user}/>
         </main>

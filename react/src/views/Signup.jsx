@@ -33,6 +33,7 @@ export default function Register(){
         const response = err.response
         if(response && response.status === 422){
         }
+        console.log(response)
       })
   }
   return(

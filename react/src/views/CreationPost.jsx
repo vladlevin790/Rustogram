@@ -84,7 +84,7 @@ export default function CreationPost() {
           />
         </label>
         <br />
-        <button type="submit">Create Post</button>
+        <button type="submit" className="border">Create Post</button>
       </form>
     </>
   );

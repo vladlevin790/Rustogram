@@ -13,7 +13,7 @@ export default function Comment({ comment }) {
       }
   },[isAvatar,setAvatar])
   return (
-    <div className="flex items-center mb-4">
+    <div className="flex items-center mb-4 border">
       <div className="flex-shrink-0">
         {isAvatar ? <img src={post.user.avatar} alt="" /> : <img src="../../src/media/icons/user.svg" className="h-[39px] w-[37px]" />}
       </div>
