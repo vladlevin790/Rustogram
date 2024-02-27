@@ -31,7 +31,7 @@ export default function Post({ post, onLikeClick, likesData, user }) {
   }
 
   return (
-    <div className="flex flex-col w-[770px]  bg-[#F9F8F8] border border-gray-300 rounded-md shadow-md mb-4 relative">
+    <article className="flex flex-col w-[770px]  bg-[#F9F8F8] border border-gray-300 rounded-md shadow-md mb-4 relative">
       {isImage && <img src={post.image_path} alt={post.altText} className="rounded-md mb-2 h-[691px]" />}
       {isVideo && (
         <div className="relative mb-2">
@@ -90,6 +90,6 @@ export default function Post({ post, onLikeClick, likesData, user }) {
           </h2>
         </div>
       </div>
-    </div>
+    </article>
   );
 }

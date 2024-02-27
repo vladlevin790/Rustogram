@@ -62,7 +62,7 @@ export default function DefaultLayout() {
         </div>
 
         <div className="flex items-center gap-[18px] font-bold text-[30px] hover:text-gray">
-          <img src="../../src/media/icons/User.png" alt="Profile Page"/>
+          <img src="../../src/media/icons/user.png" alt="Profile Page"/>
           <Link to="/profile" className="hover:text-gray-500">Профиль</Link>
         </div>
 

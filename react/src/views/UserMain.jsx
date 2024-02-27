@@ -35,7 +35,7 @@ export default function UserMain() {
   };
   const handleLikeClick = async (postId) => {
     try {
-      const hasLiked = likesData.some(like => like.post && like.post.id === postId);
+      const hasLiked = likesData.some(like => like.post && like.post.id === postId && like.user.id === user.id);
       const endpoint = hasLiked ? '/unlike' : '/like';
       const response = await axiosClient.post(endpoint, { post_id: postId });
 
