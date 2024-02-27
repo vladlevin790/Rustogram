@@ -9,6 +9,9 @@ export default {
       borderColor: theme => ({
         gradient: ["linear-gradient(#AB97EA, #6EB8E2E5, #8ABAD6)"],
       }),
+      backgroundColor: theme => ({
+        comment: "#F2F2F2",
+      })
     },
     fontFamily: {
       roboto: ["Roboto", "sans-serif"],
