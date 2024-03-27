@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\PostsController;
 use App\Http\Controllers\Api\PostCommentController;
 use App\Http\Controllers\Api\HashtagController;
+use App\Http\Controllers\UserSettingsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -38,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->file($path);
     })->where('filename', '.*');
     Route::apiResource('/user_profile', UserController::class)->except(['index', 'show']);
+    Route::post('user_profile/edit',[UserSettingsController::class,'updateUser']);
     Route::apiResource('/posts', PostsController::class)->except(['index']);
     Route::post('/posts/{post}/comments', [PostCommentController::class, 'store']);
     Route::get('/posts/{post}/comments', [PostCommentController::class, 'index']);
