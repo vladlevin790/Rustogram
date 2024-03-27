@@ -31,11 +31,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/posts', [PostsController::class, 'index']);
     Route::get('/storage/images/{filename}', function ($filename) {
         $path = storage_path("app/public/images/{$filename}");
-
         if (!File::exists($path)) {
             abort(404);
         }
-
         return response()->file($path);
     })->where('filename', '.*');
     Route::apiResource('/user_profile', UserController::class)->except(['index', 'show']);

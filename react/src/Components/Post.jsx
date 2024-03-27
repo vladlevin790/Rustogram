@@ -43,7 +43,10 @@ export default function Post({ post, onLikeClick, likesData, user }) {
           <div className="flex flex-col items-center w-full">
             <div className="flex justify-between ml-2 w-[740px] mt-5">
               <Link to="/user_profile" className="flex items-center gap-2 w-full ml-6">
-                {isAvatar ? <img src={post.user.avatar} alt="" /> : <img src="../../src/media/icons/user.svg" className="h-[39px] w-[37px]" />}
+                <div className="flex  items-center justify-center p-4 bg-gray-300 rounded-full w-[37px] h-[39px]">
+                  {!isAvatar && (<img src="../../src/media/icons/user.png" alt="" className="w-[68px]" />)}
+                  {isAvatar && (<img src={user.avatar} alt="" />)}
+                </div>
                 <h2 className="font-semibold text-[30px] font-roboto">{post.user.name}</h2>
               </Link>
               <div className="flex items-center w-[200px] font-semibold text-[20px]">
@@ -77,7 +80,7 @@ export default function Post({ post, onLikeClick, likesData, user }) {
           </div>
         )}
         {!isComment && (<Link to="/user_profile" className="flex items-center gap-2 w-full ml-6">
-          {isAvatar ? <img src={post.user.avatar} alt="" /> : <img src="../../src/media/icons/user.svg" className="h-[39px] w-[37px]" />}
+          {isAvatar ? <img className="w-[50px] h-[50px] rounded-full" src={post.user.avatar} alt="" /> : <img src="../../src/media/icons/user.svg" className="h-[39px] w-[37px]" />}
           <h2 className="font-semibold text-[30px] font-roboto">{post.user.name}</h2>
         </Link>)}
         {!isComment && (<div className="flex mt-5 w-full ml-8 font-semibold text-[20px]">

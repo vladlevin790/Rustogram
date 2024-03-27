@@ -66,11 +66,8 @@ export default function Comment({ comment }) {
     <div className="flex items-center mb-4 rounded w-[363px] bg-comment p-4 justify-between">
       <div className="flex">
         <div className="flex-shrink-0">
-          {isAvatar ? (
-            <img src={comment.user.avatar} alt=""/>
-          ) : (
-            <img src="../../src/media/icons/user.svg" className="h-[39px] w-[37px]" alt=""/>
-          )}
+            {!isAvatar && (<img className="w-[37px] h-[39px]" src="../../src/media/icons/user.png" alt="" />)}
+            {isAvatar && (<img className="w-[40px] h-[40px] rounded-full" src={comment.user.avatar} alt="" />)}
         </div>
         <div className="ml-4">
           <h2 className="text-sm font-bold text-gray-900">{comment.user.name}</h2>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import axiosClient from "../axios-client.js";
 import { useStateContext } from "../context/ContextProvider.jsx";
 import Burger from "../Components/Burger.jsx";
@@ -9,13 +9,11 @@ export default function Profile() {
   const [isBio, setIsBio] = useState(false);
   const [postsData, setPostsData] = useState([]);
   const [isModal, setIsModal] = useState(false);
-  const [formData, setFormData] = useState({
-    nickname: null,
-    bio: null,
-    email: null,
-    password: null,
-    avatar: null,
-  });
+  const nameRef = useRef();
+  const emailRef = useRef();
+  const bioRef = useRef();
+  const passwordRef = useRef();
+  const avatarRef = useRef();
   const { user } = useStateContext();
 
   const fetchData = async () => {
@@ -33,37 +31,27 @@ export default function Profile() {
   };
 
   useEffect(() => {
-    if (user.avatar != null) {
-      setIsAvatar(true);
-    } else {
-      setIsAvatar(false);
-    }
-    if (user.bio != null) {
-      setIsBio(true);
-    } else {
-      setIsBio(false);
-    }
+    setIsAvatar(user.avatar !== null);
+    setIsBio(user.bio !== null);
   }, [user.avatar, user.bio]);
 
   useEffect(() => {
     fetchData();
+    console.log(user);
   }, []);
-
-  const handleChange = e => {
-    const { id, value, files } = e.target;
-    setFormData(prevState => ({
-      ...prevState,
-      [id]: files ? files[0] : value,
-    }));
-  };
 
   const handleSubmit = async e => {
     e.preventDefault();
     try {
       const formDataToSend = new FormData();
-      for (const key in formData) {
-        formDataToSend.append(key, formData[key]);
+      formDataToSend.append('name', nameRef.current.value);
+      formDataToSend.append('email', emailRef.current.value);
+      formDataToSend.append('bio', bioRef.current.value);
+      formDataToSend.append('password', passwordRef.current.value);
+      if (avatarRef.current.files[0]) {
+        formDataToSend.append('avatar', avatarRef.current.files[0]);
       }
+
       await axiosClient.post('/user_profile/edit', formDataToSend);
       fetchData();
       setIsModal(false);
@@ -88,19 +76,19 @@ export default function Profile() {
               <form onSubmit={handleSubmit}>
                 <label htmlFor="nickname">
                   Изменить никнейм
-                  <input type="text" placeholder="Никнейм" id="nickname" onChange={handleChange} />
+                  <input type="text" placeholder="Никнейм" id="nickname" ref={nameRef} />
                 </label>
                 <label htmlFor="bio">
                   Изменить биографию
-                  <input type="text" placeholder="Биография" id="bio" onChange={handleChange} />
+                  <input type="text" placeholder="Биография" id="bio" ref={bioRef} />
                 </label>
                 <label htmlFor="email">
                   Изменить Электронную почту
-                  <input type="email" placeholder="Эллектронная почта" id="email" onChange={handleChange} />
+                  <input type="email" placeholder="Эллектронная почта" id="email" ref={emailRef} />
                 </label>
                 <label htmlFor="password">
                   Пароль
-                  <input type="password" placeholder="password" id="password" onChange={handleChange} />
+                  <input type="password" placeholder="password" id="password" ref={passwordRef} />
                 </label>
                 <label htmlFor="">
                   Изменить аватар
@@ -109,7 +97,7 @@ export default function Profile() {
                     name="avatar"
                     accept=".png, .jpg, .jpeg"
                     id="avatar"
-                    onChange={handleChange}
+                    ref={avatarRef}
                   />
                 </label>
                 <button type="submit">Подтвердить</button>
