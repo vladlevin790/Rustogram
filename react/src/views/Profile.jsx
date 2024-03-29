@@ -3,18 +3,22 @@ import axiosClient from "../axios-client.js";
 import { useStateContext } from "../context/ContextProvider.jsx";
 import Burger from "../Components/Burger.jsx";
 import UserProfilePost from "../Components/UserProfilePost.jsx";
+import toast, {Toaster} from "react-hot-toast";
 
 export default function Profile() {
   const [isAvatar, setIsAvatar] = useState(false);
   const [isBio, setIsBio] = useState(false);
   const [postsData, setPostsData] = useState([]);
   const [isModal, setIsModal] = useState(false);
+  const [userOnlineStatus, setUserOnlineStatus] = useState("");
   const nameRef = useRef();
   const emailRef = useRef();
   const bioRef = useRef();
   const passwordRef = useRef();
   const avatarRef = useRef();
-  const { user } = useStateContext();
+  const birthDayRef = useRef();
+  const genderRef = useRef();
+  const { user, setUser } = useStateContext();
 
   const fetchData = async () => {
     try {
@@ -33,6 +37,7 @@ export default function Profile() {
   useEffect(() => {
     setIsAvatar(user.avatar !== null);
     setIsBio(user.bio !== null);
+    console.log(user);
   }, [user.avatar, user.bio]);
 
   useEffect(() => {
@@ -40,23 +45,63 @@ export default function Profile() {
     console.log(user);
   }, []);
 
+  useEffect(() => {
+    setUserOnlineStatus(user.is_online ? "Онлайн" : `Офлайн, был(а) в сети ${formatLastOnline(user.last_online)}`);
+  }, [user.is_online, user.last_online]);
+
+  const formatLastOnline = (lastOnline) => {
+    if (!lastOnline) return '';
+
+    const timestamp = new Date(lastOnline);
+    const currentTime = new Date();
+    const timeDifferenceInSeconds = Math.floor((currentTime - timestamp) / 1000);
+
+    let formattedTimeString = '';
+
+    if (timeDifferenceInSeconds < 60) {
+      formattedTimeString = 'только что';
+    } else if (timeDifferenceInSeconds < 3600) {
+      const minutesAgo = Math.floor(timeDifferenceInSeconds / 60);
+      formattedTimeString = `${minutesAgo} минут${getMinutesSuffix(minutesAgo)} назад`;
+    } else if (timeDifferenceInSeconds < 86400) {
+      const hoursAgo = Math.floor(timeDifferenceInSeconds / 3600);
+      formattedTimeString = `${hoursAgo} час${getHoursSuffix(hoursAgo)} назад`;
+    } else {
+      const daysAgo = Math.floor(timeDifferenceInSeconds / 86400);
+      formattedTimeString = `${daysAgo} д${getDaysSuffix(daysAgo)} назад`;
+    }
+
+    return formattedTimeString;
+  };
+
+
   const handleSubmit = async e => {
     e.preventDefault();
     try {
+      if (birthDayRef.current.value != null) {
+        const birthday = new Date(birthDayRef.current.value);
+        const formattedBirthday = birthday.toISOString().split('T')[0];
+      }
       const formDataToSend = new FormData();
       formDataToSend.append('name', nameRef.current.value);
       formDataToSend.append('email', emailRef.current.value);
       formDataToSend.append('bio', bioRef.current.value);
       formDataToSend.append('password', passwordRef.current.value);
+      formDataToSend.append('birthday',formattedBirthday);
+      formDataToSend.append('gender', genderRef.current.value);
       if (avatarRef.current.files[0]) {
         formDataToSend.append('avatar', avatarRef.current.files[0]);
       }
 
       await axiosClient.post('/user_profile/edit', formDataToSend);
-      fetchData();
       setIsModal(false);
+      await axiosClient.get("/user_profile").then(({ data }) => {
+        setUser(data);
+      });
+      toast("Вы успешно обновили аккаунт",{style:{background:"#71D87B", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
     } catch (error) {
-      console.error('Error updating user:', error);
+      toast(error.message)
+      toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
     }
   };
 
@@ -66,49 +111,118 @@ export default function Profile() {
     <section className="flex flex-col mt-16">
       <article className="flex ml-60">
         <div className=" flex flex-col gap-2 w-[178px]">
-          <div className="flex  items-center justify-center p-4 bg-gray-300 rounded-full w-[130px] h-[130px]">
-            {!isAvatar && (<img src="../../src/media/icons/user.png" alt="" className="w-[68px]" />)}
-            {isAvatar && (<img src={user.avatar} alt="" />)}
-          </div>
+          {isAvatar && (<img className="rounded-full w-[130px] h-[130px]" src={user.avatar} alt="" />)}
+          {!isAvatar && (<div className="flex  items-center justify-center p-4 bg-gray-300 rounded-full w-[130px] h-[130px]">
+            <img src="../../src/media/icons/user.png" alt="" className="w-[68px]" />
+          </div>)}
           <button className="flex items-center font-semibold bg-gray-300 h-8 p-5 rounded" onClick={() => { setIsModal(!isModal) }}><Burger className="w-6 mt-2" />Редактировать</button>
           {isModal && (
-            <div>
-              <form onSubmit={handleSubmit}>
-                <label htmlFor="nickname">
-                  Изменить никнейм
-                  <input type="text" placeholder="Никнейм" id="nickname" ref={nameRef} />
-                </label>
-                <label htmlFor="bio">
-                  Изменить биографию
-                  <input type="text" placeholder="Биография" id="bio" ref={bioRef} />
-                </label>
-                <label htmlFor="email">
-                  Изменить Электронную почту
-                  <input type="email" placeholder="Эллектронная почта" id="email" ref={emailRef} />
-                </label>
-                <label htmlFor="password">
-                  Пароль
-                  <input type="password" placeholder="password" id="password" ref={passwordRef} />
-                </label>
-                <label htmlFor="">
-                  Изменить аватар
-                  <input
-                    type="file"
-                    name="avatar"
-                    accept=".png, .jpg, .jpeg"
-                    id="avatar"
-                    ref={avatarRef}
-                  />
-                </label>
-                <button type="submit">Подтвердить</button>
-              </form>
+            <div className="fixed inset-0 overflow-y-auto flex items-center justify-center z-50">
+              <div className="fixed inset-0 transition-opacity">
+                <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+              </div>
+              <div className="relative bg-white rounded-lg shadow-lg max-w-lg mx-auto p-6 w-[550px]">
+                <button
+                  className="absolute top-0 right-0 mt-4 mr-4 text-gray-600 hover:text-gray-800 focus:outline-none"
+                  onClick={() => setIsModal(false)}
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path d="M6 18L18 6M6 6l12 12"></path>
+                  </svg>
+                </button>
+                <form onSubmit={handleSubmit}>
+                  <label htmlFor="nickname" className="block mb-4 font-roboto font-weight-bolder text-xl">
+                    Изменить никнейм
+                    <input
+                      type="text"
+                      placeholder="Никнейм"
+                      id="nickname"
+                      ref={nameRef}
+                      className="mt-1 block w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-12 bg-gray-100 p-2 transition hover:bg-gray-200 hover:placeholder:text-gray-900"
+                    />
+                  </label>
+                  <label htmlFor="bio" className="block mb-4 font-roboto font-weight-bolder text-xl">
+                    Изменить биографию
+                    <input
+                      type="text"
+                      placeholder="Биография"
+                      id="bio"
+                      ref={bioRef}
+                      className="mt-1 block w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-12 bg-gray-100 p-2 transition hover:bg-gray-200 hover:placeholder:text-gray-900"
+                    />
+                  </label>
+                  <label htmlFor="email" className="block mb-4 font-roboto font-weight-bolder text-xl">
+                    Изменить Электронную почту
+                    <input
+                      type="email"
+                      placeholder="Эллектронная почта"
+                      id="email"
+                      ref={emailRef}
+                      className="mt-1 block w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-12 bg-gray-100 p-2 transition hover:bg-gray-200 hover:placeholder:text-gray-900"
+                    />
+                  </label>
+                  <label htmlFor="password" className="block mb-4 font-roboto font-weight-bolder text-xl">
+                    Пароль
+                    <input
+                      type="password"
+                      placeholder="Пароль"
+                      id="password"
+                      ref={passwordRef}
+                      className="mt-1 block w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-12 bg-gray-100 p-2 transition hover:bg-gray-200 hover:placeholder:text-gray-900"
+                    />
+                  </label>
+                  <label htmlFor="birthday">
+                    Изменить дату дня рождения
+                    <input type="date" id="birthday" name="birthday" ref={birthDayRef}/>
+                  </label>
+                  <label htmlFor="gender">
+                    Изменить пол
+                    <select ref={genderRef} id="gender">
+                      <option value="male">Мужской</option>
+                      <option value="female">Женский</option>
+                    </select>
+                  </label>
+                  <label htmlFor="avatar" className="block mb-4 font-roboto font-weight-bolder text-xl">
+                    Изменить аватар
+                    <label className="cursor-pointer">
+                    <span
+                      className="block w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-2 px-3  h-12 bg-gray-100 p-2 transition hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-opacity-50 ">
+                      Выберите файл
+                    </span>
+                      <input
+                        type="file"
+                        name="avatar"
+                        accept=".png, .jpg, .jpeg"
+                        id="avatar"
+                        ref={avatarRef}
+                        className="hidden"
+                      />
+                    </label>
+                  </label>
+                  <button
+                    type="submit"
+                    className="bg-indigo-500 text-white py-2 px-4 rounded hover:bg-indigo-600 focus:outline-none focus:ring focus:ring-indigo-200 focus:ring-opacity-50 font-roboto font-weight-bolder text-xl"
+                  >
+                    Подтвердить
+                  </button>
+                </form>
+              </div>
             </div>
           )}
         </div>
         <div className="flex flex-col ml-9 mt-5">
           <h2 className="font-bold text-4xl">{user.name}</h2>
-          {/*<p>online</p>*/}
+          {userOnlineStatus && <p className="font-semibold text-2xl">{userOnlineStatus}</p>}
           {isBio && (<p className="font-semibold text-2xl">{user.bio}</p>)}
+          {!isBio && (<p className="">Информация отсутствует</p>)}
         </div>
       </article>
       <article className="border-b mt-5 mb-5"></article>
@@ -119,6 +233,7 @@ export default function Profile() {
           ))}
         </div>
       </article>
+      <Toaster />
     </section>
-  )
+  );
 }

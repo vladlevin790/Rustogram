@@ -18,6 +18,10 @@ return new class extends Migration
             $table->string('password');
             $table->string('avatar')->nullable();
             $table->text('bio')->nullable();
+            $table->timestamp('birthday')->nullable();
+            $table->string('gender')->default('');
+            $table->boolean('is_online')->default(false);
+            $table->timestamp('last_online')->nullable();
             $table->rememberToken()->nullable();
             $table->timestamps();
         });

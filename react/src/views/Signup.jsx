@@ -4,6 +4,7 @@ import lottieJson from "../media/gifs/Animation - 1702897743165.json";
 import {Link} from "react-router-dom";
 import {useStateContext} from "../context/ContextProvider.jsx";
 import axiosClient from "../axios-client.js";
+import toast from "react-hot-toast";
 
 export default function Register(){
 
@@ -28,11 +29,10 @@ export default function Register(){
       .then(({data}) => {
         setUser(data.user)
         setToken(data.token)
+        toast("Вы зарегистрировали аккаунт!",{style:{background:"#ABF3B3", fontFamily:"Roboto", fontSize:'20px', color:'white'}});
       })
       .catch(err => {
-        const response = err.response
-        if(response && response.status === 422){
-        }
+        toast("Проверьте ваши данные",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
       })
   }
   return(

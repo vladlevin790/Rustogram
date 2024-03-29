@@ -4,6 +4,7 @@ import lottieJson from '../media/gifs/Animation - 1702897743165.json';
 import {createRef, useState} from "react";
 import {useStateContext} from "../context/ContextProvider.jsx";
 import axiosClient from "../axios-client.js";
+import toast, {Toaster} from "react-hot-toast";
 
 export default function Login(){
   const emailRef = createRef()
@@ -18,16 +19,14 @@ export default function Login(){
       email: emailRef.current.value,
       password: passwordRef.current.value,
     }
-    axiosClient.post('/login', payload)
+    axiosClient.post('/login', payload, {withCredentials:true})
       .then(({data}) => {
-        setUser(data.user)
-        setToken(data.token);
+        setUser(data.original.user)
+        setToken(data.original.token);
+        toast("Вы вошли в аккаунт!",{style:{background:"#ABF3B3", fontFamily:"Roboto", fontSize:'20px', color:'white'}});
       })
       .catch((err) => {
-        const response = err.response;
-        if (response && response.status === 422) {
-          setMessage(response.data.message)
-        }
+        toast("Проверьте свои данные",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}});
       })
   }
   return(
@@ -51,6 +50,7 @@ export default function Login(){
           <Link to="/signup" className="text-blue-500 hover:underline">Зарегистрироваться</Link>
         </div>
       </form>
+      <Toaster/>
     </div>
   )
 }

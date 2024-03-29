@@ -3,13 +3,21 @@ import Post from "../Components/Post.jsx";
 import Story from "../Components/Story.jsx";
 import axiosClient from "../axios-client.js";
 import {useStateContext} from "../context/ContextProvider.jsx";
+import {Navigate, useNavigate} from "react-router-dom";
+import toast, {Toaster} from "react-hot-toast";
 
 export default function UserMain() {
   const [newStory, setNewStory] = useState(false);
   const [postsData, setPostsData] = useState([]);
   const [likesData, setLikesData] = useState([]);
   const { user } = useStateContext();
+  const navigate = useNavigate();
 
+  axiosClient.get('user_main').then(({data})=>{
+    if(data.birthday == undefined || data.birthday == null) {
+      navigate('/user_insert_update');
+    }
+  })
 
   const fetchData = async () => {
     try
@@ -52,29 +60,22 @@ export default function UserMain() {
             return post;
           })
         );
-
         setLikesData(prevLikesData => {
           const updatedLikesData = hasLiked
             ? prevLikesData.filter(like => !(like.post && like.post.id === postId))
             : [...prevLikesData, { id: postId, user: user, post: { id: postId } }];
           return updatedLikesData;
         });
-
-
-
       } else {
-        console.error('Error ' + (hasLiked ? 'unliking' : 'liking') + ' post:', response.data);
+        toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
       }
     } catch (error) {
-      console.error('Error with like/unlike request:', error);
+      toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
     }
   };
-
-
   useEffect(() => {
     fetchData();
   }, []);
-  console.log(likesData)
 
   return (
     <div className="flex flex-col justify-center items-center">
@@ -90,6 +91,7 @@ export default function UserMain() {
           <Post key={post.id} post={post} onLikeClick={handleLikeClick} likesData={likesData} user={user}/>
         ))}
       </main>
+      <Toaster />
     </div>
   );
 }

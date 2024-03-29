@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\PostsController;
 use App\Http\Controllers\Api\PostCommentController;
 use App\Http\Controllers\Api\HashtagController;
 use App\Http\Controllers\UserSettingsController;
+use App\Http\Controllers\UserSignUpUpdateController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/signup/finish', [UserSignUpUpdateController::class, 'insertSignUpUserInfo']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user_main', function (Request $request) {
         return $request->user();
@@ -37,7 +39,10 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->file($path);
     })->where('filename', '.*');
     Route::apiResource('/user_profile', UserController::class)->except(['index', 'show']);
-    Route::post('user_profile/edit',[UserSettingsController::class,'updateUser']);
+    Route::get('/user_profile',function (Request $request) {
+        return $request->user();
+    });
+    Route::post('/user_profile/edit',[UserSettingsController::class,'updateUser']);
     Route::apiResource('/posts', PostsController::class)->except(['index']);
     Route::post('/posts/{post}/comments', [PostCommentController::class, 'store']);
     Route::get('/posts/{post}/comments', [PostCommentController::class, 'index']);

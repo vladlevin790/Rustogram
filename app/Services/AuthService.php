@@ -1,33 +1,36 @@
 <?php
-namespace App\Http\Controllers\Api\Traits;
+
+namespace App\Services;
 
 use App\Models\User;
 
-trait ApiAuthTrait
+class AuthService
 {
-    private function createUser(array $data)
+    public function createUser(array $data)
     {
         $user = User::create([
             'name' => $data['name'],
             'email' => $data['email'],
             'password' => bcrypt($data['password']),
+            'last_login' => now(),
+            'is_online' => true,
         ]);
 
         return $this->generateToken($user);
     }
 
-    private function generateToken(User $user)
+    public function generateToken(User $user)
     {
         $token = $user->createToken('main')->plainTextToken;
         return $this->successResponse(compact('user', 'token'));
     }
 
-    private function invalidCredentials()
+    public function invalidCredentials()
     {
         return $this->errorResponse('Provided email or password is incorrect', 422);
     }
 
-    private function revokeToken(User $user)
+    public function revokeToken(User $user)
     {
         $user->currentAccessToken()->delete();
         return $this->emptyResponse(204);

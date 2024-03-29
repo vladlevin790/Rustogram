@@ -12,6 +12,7 @@ import Shorts from "./views/Shorts.jsx";
 import Messages from "./views/Messages.jsx";
 import Profile from "./views/Profile.jsx";
 import CreationPost from "./views/CreationPost.jsx";
+import InsertUpdateUser from "./views/InsertUpdateUser.jsx";
 
 const router = createBrowserRouter([
   {
@@ -25,6 +26,10 @@ const router = createBrowserRouter([
       {
         path: '/user_main',
         element: <UserMain/>
+      },
+      {
+        path: '/user_insert_update',
+        element: <InsertUpdateUser />
       },
       {
         path: '/search',
