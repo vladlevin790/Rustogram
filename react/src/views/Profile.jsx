@@ -78,16 +78,12 @@ export default function Profile() {
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      if (birthDayRef.current.value != null) {
-        const birthday = new Date(birthDayRef.current.value);
-        const formattedBirthday = birthday.toISOString().split('T')[0];
-      }
       const formDataToSend = new FormData();
       formDataToSend.append('name', nameRef.current.value);
       formDataToSend.append('email', emailRef.current.value);
       formDataToSend.append('bio', bioRef.current.value);
       formDataToSend.append('password', passwordRef.current.value);
-      formDataToSend.append('birthday',formattedBirthday);
+      formDataToSend.append('birthday',birthDayRef.current.value);
       formDataToSend.append('gender', genderRef.current.value);
       if (avatarRef.current.files[0]) {
         formDataToSend.append('avatar', avatarRef.current.files[0]);
@@ -179,13 +175,23 @@ export default function Profile() {
                       className="mt-1 block w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-12 bg-gray-100 p-2 transition hover:bg-gray-200 hover:placeholder:text-gray-900"
                     />
                   </label>
-                  <label htmlFor="birthday">
+                  <label htmlFor="birthday" className="block mb-4 font-roboto font-weight-bolder text-xl">
                     Изменить дату дня рождения
-                    <input type="date" id="birthday" name="birthday" ref={birthDayRef}/>
+                    <input
+                      type="date"
+                      id="birthday"
+                      name="birthday"
+                      ref={birthDayRef}
+                      className="mt-1 block w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-12 bg-gray-100 p-2 transition hover:bg-gray-200 hover:placeholder:text-gray-900"
+                    />
                   </label>
-                  <label htmlFor="gender">
+                  <label htmlFor="gender" className="block mb-4 font-roboto font-weight-bolder text-xl">
                     Изменить пол
-                    <select ref={genderRef} id="gender">
+                    <select
+                      ref={genderRef}
+                      id="gender"
+                      className="mt-1 block w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-12 bg-gray-100 p-2 transition hover:bg-gray-200 hover:placeholder:text-gray-900"
+                    >
                       <option value="male">Мужской</option>
                       <option value="female">Женский</option>
                     </select>
@@ -229,11 +235,11 @@ export default function Profile() {
       <article className="flex justify-between ">
         <div className="flex flex-wrap gap-20 mt-10 ml-10">
           {postUser.map(post => (
-            <UserProfilePost key={post.id} post={post} className="hover:opacity-10" />
+            <UserProfilePost key={post.id} post={post} className="hover:opacity-10"/>
           ))}
         </div>
       </article>
-      <Toaster />
+      <Toaster/>
     </section>
   );
 }
