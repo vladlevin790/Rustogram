@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, {useEffect, useRef, useState} from "react";
 import axiosClient from "../axios-client.js";
-import { useStateContext } from "../context/ContextProvider.jsx";
+import {useStateContext} from "../context/ContextProvider.jsx";
 import Burger from "../Components/Burger.jsx";
 import UserProfilePost from "../Components/UserProfilePost.jsx";
 import toast, {Toaster} from "react-hot-toast";
+import Post from "../Components/Post.jsx";
 
 export default function Profile() {
   const [isAvatar, setIsAvatar] = useState(false);
@@ -19,30 +20,72 @@ export default function Profile() {
   const birthDayRef = useRef();
   const genderRef = useRef();
   const { user, setUser } = useStateContext();
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [likesData, setLikesData] = useState([]);
 
   const fetchData = async () => {
     try {
       const [postsResponse, likesResponse] = await Promise.all([
         axiosClient.get('/posts'),
+        axiosClient.get('/getLikes'),
       ]);
       const posts = postsResponse.data.map(post => ({
         ...post,
+        isLiked: false
       }));
+      const likes = likesResponse.data.likes;
       setPostsData(posts);
+      setLikesData(likes);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
 
+  const handleLikeClick = async (postId) => {
+    try {
+      const hasLiked = likesData.some(like => like.post && like.post.id === postId && like.user.id === user.id);
+      const endpoint = hasLiked ? '/unlike' : '/like';
+      const response = await axiosClient.post(endpoint, { post_id: postId });
+
+      if (response.status === 200) {
+        const updatedPostsData = postsData.map(post => {
+          if (post.id === postId) {
+            return {
+              ...post,
+              likes: hasLiked ? post.likes - 1 : post.likes + 1,
+              isLiked: !hasLiked,
+            };
+          }
+          return post;
+        });
+
+        setPostsData(updatedPostsData);
+
+        if (selectedPost && selectedPost.id === postId) {
+          setSelectedPost(updatedPostsData.find(post => post.id === postId));
+        }
+
+        setLikesData(prevLikesData => {
+          return hasLiked
+            ? prevLikesData.filter(like => !(like.post && like.post.id === postId))
+            : [...prevLikesData, {id: postId, user: user, post: {id: postId}}];
+        });
+      } else {
+        toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
+      }
+    } catch (error) {
+      toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
+    }
+  };
+
+
   useEffect(() => {
     setIsAvatar(user.avatar !== null);
     setIsBio(user.bio !== null);
-    console.log(user);
   }, [user.avatar, user.bio]);
 
   useEffect(() => {
     fetchData();
-    console.log(user);
   }, []);
 
   useEffect(() => {
@@ -73,7 +116,6 @@ export default function Profile() {
 
     return formattedTimeString;
   };
-
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -235,10 +277,24 @@ export default function Profile() {
       <article className="flex justify-between ">
         <div className="flex flex-wrap gap-20 mt-10 ml-10">
           {postUser.map(post => (
-            <UserProfilePost key={post.id} post={post} className="hover:opacity-10"/>
+            <div key={post.id} onClick={() => setSelectedPost(post)}>
+              <UserProfilePost post={post} />
+            </div>
           ))}
         </div>
       </article>
+      {selectedPost && (
+        <div className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center"
+             onClick={(e) => {
+               if (e.target === e.currentTarget) {
+                 setSelectedPost(null);
+               }
+             }}>
+          <div className="max-w-screen-lg mx-auto mt-6 max-h-screen overflow-y-auto">
+            <Post post={selectedPost} onLikeClick={handleLikeClick} likesData={likesData} user={user}/>
+          </div>
+        </div>
+      )}
       <Toaster/>
     </section>
   );
