@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import axiosClient from "../axios-client.js";
+import toast, {Toaster} from "react-hot-toast";
+import {useNavigate} from "react-router-dom";
 
 export default function CreationPost() {
   const [postData, setPostData] = useState({
@@ -9,6 +11,7 @@ export default function CreationPost() {
   });
   const [previewImage, setPreviewImage] = useState(null);
   const [isSelect, setIsSelect] = useState(false);
+  const navigate = useNavigate();
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -38,14 +41,12 @@ export default function CreationPost() {
       formData.append('video_path', postData.video_path);
       formData.append('description', postData.description);
 
-      const response = await axiosClient.post('/posts', formData, {
+      await axiosClient.post('/posts', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${localStorage.getItem('ACCESS_TOKEN')}`,
         },
       });
-
-      console.log('Post created:', response.data);
 
       setPostData({
         image_path: '',
@@ -53,8 +54,10 @@ export default function CreationPost() {
         description: '',
       });
       setPreviewImage(null);
+      toast("Фотография добавлена",{style:{background:"#71D87B", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
+      navigate('/profile');
     } catch (error) {
-      console.error('Error creating post:', error);
+      toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
     }
   };
 
@@ -124,6 +127,7 @@ export default function CreationPost() {
           <button className="w-[430px] h-[114px] bg-[#B1E3B0] rounded font-roboto text-[25px] font-weight-bolder" onClick={handleSelect}>Выбрать контент</button>
         </article>
       </>)}
+      <Toaster/>
     </section>
   );
 }

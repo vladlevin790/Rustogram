@@ -1,9 +1,12 @@
 <?php
 namespace App\Services;
 
+use App\Models\MorePost;
 use App\Models\Posts;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class Post
 {
@@ -25,27 +28,50 @@ class Post
         return $posts;
     }
 
-    public function updatePhoto(Request $request, $posts)
+    public function updatePost(Request $request, $postId)
     {
-        $this->authorize('update', $posts);
+        $user = Auth::user();
+        $post = Post::findOrFail($postId);
+
+        if ($user->id !== $post->user_id) {
+            abort(403, 'Вы не являетесь владельцем этого поста');
+        }
 
         $data = $request->validate([
-            'image_path' => 'string',
+            'image_path' => 'nullable|string',
             'video_path' => 'nullable|string',
             'description' => 'nullable|string',
         ]);
 
-        $posts->update($data);
+        $post->update($data);
 
-        return $posts;
+        if ($request->has('image_path') || $request->has('video_path')) {
+            $morePostData = [];
+            if ($request->has('image_path')) {
+                $morePostData['image_path'] = $data['image_path'];
+            }
+            if ($request->has('video_path')) {
+                $morePostData['video_path'] = $data['video_path'];
+            }
+            $morePostData['post_id'] = $postId;
+            MorePost::create($morePostData);
+        }
+        return $post;
     }
 
-    public function deletePhoto($posts)
+
+    public function deletePost($postId)
     {
-        $this->authorize('delete', $posts);
-
-        $posts->delete();
-
+        $user = Auth::user();
+        $post = Posts::FindOrFail($postId);
+        if ($user->id !== $post->user_id) {
+            abort(403, 'Вы не являетесь владельцем этого поста и не можете его удалить');
+        }
+        $imagePath = str_replace('http://localhost:8000/storage/', 'public/', $post->image_path);
+        Storage::delete($imagePath);
+        MorePost::where('post_id', $postId)->delete();
+        $post->delete();
         return null;
     }
+
 }

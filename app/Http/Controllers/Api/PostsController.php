@@ -5,6 +5,8 @@ use App\Services\Post;
 use App\Http\Controllers\Controller;
 use App\Models\Posts;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class PostsController extends Controller
 {
@@ -57,21 +59,26 @@ class PostsController extends Controller
         return response()->json($posts);
     }
 
-    public function edit(Posts $posts)
+//    public function update(Request $request, Posts $posts)
+//    {
+//        $posts = $this->post->updatePost($request, $posts);
+//        return response()->json($posts, 200);
+//    }
+
+    public function destroy($posts)
     {
-    }
-
-    public function update(Request $request, Posts $posts)
-    {
-        $posts = $this->post->updatePhoto($request, $posts);
-
-        return response()->json($posts, 200);
-    }
-
-    public function destroy(Posts $posts)
-    {
-        $this->post->deletePhoto($posts);
-
+        $this->post->deletePost($posts);
         return response()->json(null, 204);
+    }
+
+    public function updatePostDescription($postId,$bioRef)
+    {
+        $user = Auth::user();
+        $post = Posts::FindOrFail($postId);
+        if ($user->id !== $post->user_id) {
+            abort(403, 'Вы не являетесь владельцем этого поста и не можете его удалить');
+        }
+        $post->update(['description'=>$bioRef]);
+        return response()->json(['Success' => true,'status' => 200]);
     }
 }

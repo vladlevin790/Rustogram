@@ -89,7 +89,7 @@ export default function Profile() {
   }, []);
 
   useEffect(() => {
-    setUserOnlineStatus(user.is_online ? "Онлайн" : `Офлайн, был(а) в сети ${formatLastOnline(user.last_online)}`);
+    setUserOnlineStatus(user.is_online ? "Онлайн" : `${user.gender == 'female' ? 'была' : 'был'} в сети ${formatLastOnline(user.last_online)}`);
   }, [user.is_online, user.last_online]);
 
   const formatLastOnline = (lastOnline) => {
@@ -138,7 +138,6 @@ export default function Profile() {
       });
       toast("Вы успешно обновили аккаунт",{style:{background:"#71D87B", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
     } catch (error) {
-      toast(error.message)
       toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
     }
   };
@@ -157,25 +156,13 @@ export default function Profile() {
           {isModal && (
             <div className="fixed inset-0 overflow-y-auto flex items-center justify-center z-50">
               <div className="fixed inset-0 transition-opacity">
-                <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+                <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={(e) => {
+                  if (e.target === e.currentTarget) {
+                    setIsModal(false);
+                  }
+                }}></div>
               </div>
-              <div className="relative bg-white rounded-lg shadow-lg max-w-lg mx-auto p-6 w-[550px]">
-                <button
-                  className="absolute top-0 right-0 mt-4 mr-4 text-gray-600 hover:text-gray-800 focus:outline-none"
-                  onClick={() => setIsModal(false)}
-                >
-                  <svg
-                    className="w-6 h-6"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path d="M6 18L18 6M6 6l12 12"></path>
-                  </svg>
-                </button>
+              <div className="relative bg-white rounded-lg shadow-lg max-w-lg mx-auto p-6 w-[550px]" >
                 <form onSubmit={handleSubmit}>
                   <label htmlFor="nickname" className="block mb-4 font-roboto font-weight-bolder text-xl">
                     Изменить никнейм
@@ -267,10 +254,19 @@ export default function Profile() {
           )}
         </div>
         <div className="flex flex-col ml-9 mt-5">
-          <h2 className="font-bold text-4xl">{user.name}</h2>
-          {userOnlineStatus && <p className="font-semibold text-2xl">{userOnlineStatus}</p>}
-          {isBio && (<p className="font-semibold text-2xl">{user.bio}</p>)}
-          {!isBio && (<p className="">Информация отсутствует</p>)}
+          <h2 className="font-bold font-roboto text-4xl mb-2">{user.name}</h2>
+          {userOnlineStatus && (<>
+            {userOnlineStatus == "Онлайн" ?
+              <div className="flex align-content-center items-center gap-1">
+                <p className="text-2xl text-green-700">◉</p>
+                <p className="font-semibold font-roboto text-2xl text-green-700">{userOnlineStatus}</p>
+              </div> : <p className="font-semibold font-roboto text-2xl text-green-700">{userOnlineStatus}</p>
+            }
+          </>)}
+          {isBio && (<p className="font-semibold font-roboto text-2xl">{user.bio}</p>)}
+          {!isBio && (<p className="font-roboto font-semibold text-2xl">Информация отсутствует</p>)}
+          <p className="font-semibold font-roboto text-2xl">Дата рождения: {new Date(user.birthday).toLocaleDateString('ru-RU',{year: 'numeric', month: 'long', day: 'numeric'})}</p>
+          <p className="font-semibold font-roboto text-2xl">Пол: {user.gender == 'female' ? 'Женский' : 'Мужской'}</p>
         </div>
       </article>
       <article className="border-b mt-5 mb-5"></article>

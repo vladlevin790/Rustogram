@@ -13,7 +13,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('more-posts', function (Blueprint $table) {
+        Schema::create('more_posts', function (Blueprint $table) {
             $table->id();
             $table->string('image_path');
             $table->string('video_path')->nullable();
@@ -28,6 +28,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('more-posts');
+        Schema::dropIfExists('more_posts');
     }
 };

@@ -11,6 +11,7 @@ export default function UserMain() {
   const [postsData, setPostsData] = useState([]);
   const [likesData, setLikesData] = useState([]);
   const { user } = useStateContext();
+  const [isOwner, setIsOwner] = useState(false);
   const navigate = useNavigate();
 
   axiosClient.get('user_main').then(({data})=>{
@@ -41,6 +42,22 @@ export default function UserMain() {
       console.error('Error fetching data:', error);
     }
   };
+
+  const updatePostsList = (postId) => {
+    setPostsData(postsData => postsData.filter(post => post.id !== postId));
+  };
+
+  const updatePostDescription = (postId, postBio) => {
+    setPostsData(postsData =>
+      postsData.map(post => {
+        const updatedPost = post.id === postId ? { ...post, description: postBio } : post;
+        console.log(updatedPost);
+        return updatedPost;
+      })
+    );
+  };
+
+
   const handleLikeClick = async (postId) => {
     try {
       const hasLiked = likesData.some(like => like.post && like.post.id === postId && like.user.id === user.id);
@@ -88,7 +105,7 @@ export default function UserMain() {
       </header>
       <main>
         {postsData.map(post => (
-          <Post key={post.id} post={post} onLikeClick={handleLikeClick} likesData={likesData} user={user}/>
+          <Post key={post.id} post={post} onLikeClick={handleLikeClick} likesData={likesData} user={user} isOwner={post.user.id == user.id} updatePostsList={updatePostsList} updatePostDescription={updatePostDescription} />
         ))}
       </main>
       <Toaster />
