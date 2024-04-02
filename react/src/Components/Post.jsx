@@ -54,7 +54,7 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
 
       updatePostImagesOrVideosNumbered(post.id);
     } catch (error) {
-      // Обработайте ошибку
+      
     }
   };
 
