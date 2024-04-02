@@ -48,13 +48,23 @@ export default function UserMain() {
   };
 
   const updatePostDescription = (postId, postBio) => {
-    setPostsData(postsData =>
-      postsData.map(post => {
+    setPostsData(postsData => postsData.map(
+      post => {
         const updatedPost = post.id === postId ? { ...post, description: postBio } : post;
-        console.log(updatedPost);
         return updatedPost;
       })
     );
+  };
+
+  //TODO: поправить функцию
+  const updatePostImagesOrVideosNumbered = async (postId) => {
+    try {
+      const response = await axiosClient.get(`/posts/${postId}`);
+      // setPostsData(postsData.map(post => (post.id === postId ? response.data : post)));
+      console.log(response.data)
+    } catch (error) {
+      toast("Произошла ошибка при обновлении поста");
+    }
   };
 
 
@@ -105,7 +115,7 @@ export default function UserMain() {
       </header>
       <main>
         {postsData.map(post => (
-          <Post key={post.id} post={post} onLikeClick={handleLikeClick} likesData={likesData} user={user} isOwner={post.user.id == user.id} updatePostsList={updatePostsList} updatePostDescription={updatePostDescription} />
+          <Post key={post.id} post={post} onLikeClick={handleLikeClick} likesData={likesData} user={user} isOwner={post.user.id == user.id} updatePostsList={updatePostsList} updatePostDescription={updatePostDescription} updatePostImagesOrVideosNumbered={updatePostImagesOrVideosNumbered}/>
         ))}
       </main>
       <Toaster />

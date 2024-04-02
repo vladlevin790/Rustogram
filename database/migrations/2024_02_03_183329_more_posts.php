@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('image_path');
             $table->string('video_path')->nullable();
             $table->foreignId('post_id')->constrained('posts');
+            $table->timestamps();
         });
     }
 

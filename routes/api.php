@@ -1,12 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\PostsLikeController;
-use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\Api\PostsController;
-use App\Http\Controllers\Api\PostCommentController;
 use App\Http\Controllers\Api\HashtagController;
-use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\UserSignUpUpdateController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -24,37 +19,13 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/signup/finish', [UserSignUpUpdateController::class, 'insertSignUpUserInfo']);
+    require __DIR__ . '/posts_routes.php';
+    require __DIR__.'/likes_routes.php';
+    require __DIR__ . '/user_profile_routes.php';
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user_main', function (Request $request) {
         return $request->user();
     });
-
-    Route::post('/posts', [PostsController::class, 'store']);
-    Route::get('/posts', [PostsController::class, 'index']);
-    Route::get('/storage/images/{filename}', function ($filename) {
-        $path = storage_path("app/public/images/{$filename}");
-        if (!File::exists($path)) {
-            abort(404);
-        }
-        return response()->file($path);
-    })->where('filename', '.*');
-    Route::apiResource('/user_profile', UserController::class)->except(['index', 'show']);
-    Route::get('/user_profile',function (Request $request) {
-        return $request->user();
-    });
-    Route::post('/user_profile/edit',[UserSettingsController::class,'updateUser']);
-    Route::apiResource('/posts', PostsController::class)->except(['index']);
-    Route::post('/posts/{post}/comments', [PostCommentController::class, 'store']);
-    Route::get('/posts/{post}/comments', [PostCommentController::class, 'index']);
-    Route::put('/posts/{post}/comments/{comment}', [PostCommentController::class, 'update']);
-    Route::delete('/posts/{post}/comments/{comment}', [PostCommentController::class, 'destroy']);
-    Route::delete('/posts/{postId}', [PostsController::class, 'destroy']);
-    Route::put('/posts/{postId}/{bioRef}', [PostsController::class, 'updatePostDescription']);
-    Route::put('/post/update', [PostController::class,'update']);
-    Route::get('/getLikes', [PostsLikeController::class, 'getLikes']);
-    Route::post('/like', [PostsLikeController::class, 'likePost']);
-    Route::post('/unlike', [PostsLikeController::class, 'unlikePost']);
-    Route::apiResource('likes', PostsLikeController::class)->except(['index']);
     Route::apiResource('/hashtags', HashtagController::class)->except(['index']);
 });
 

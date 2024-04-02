@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Api;
 
+use App\Models\MorePost;
 use App\Services\Post;
 use App\Http\Controllers\Controller;
 use App\Models\Posts;
@@ -19,38 +20,13 @@ class PostsController extends Controller
 
     public function index()
     {
-        $posts = Posts::with('user', 'comments', 'likes', 'hashtags')->get();
-
-        $formattedPosts = $posts->map(function ($post) {
-            return [
-                'id' => $post->id,
-                'image_path' => $post->image_path,
-                'video_path' => $post->video_path,
-                'description' => $post->description,
-                'created_at' => $post->created_at,
-                'updated_at' => $post->updated_at,
-                'user' => [
-                    'id' => $post->user->id,
-                    'name' => $post->user->name,
-                    'avatar' => $post->user->avatar,
-                ],
-                'comments' => $post->comments,
-                'likes' => $post->likes->count(),
-                'hashtags' => $post->hashtags,
-            ];
-        });
-
+        $formattedPosts = $this->post->selectAllPost();
         return response()->json($formattedPosts);
-    }
-
-    public function create()
-    {
     }
 
     public function store(Request $request)
     {
-        $posts = $this->post->createPhoto($request);
-
+        $posts = $this->post->createPost($request);
         return response()->json($posts, 201);
     }
 
@@ -58,12 +34,6 @@ class PostsController extends Controller
     {
         return response()->json($posts);
     }
-
-//    public function update(Request $request, Posts $posts)
-//    {
-//        $posts = $this->post->updatePost($request, $posts);
-//        return response()->json($posts, 200);
-//    }
 
     public function destroy($posts)
     {
@@ -73,12 +43,18 @@ class PostsController extends Controller
 
     public function updatePostDescription($postId,$bioRef)
     {
-        $user = Auth::user();
-        $post = Posts::FindOrFail($postId);
-        if ($user->id !== $post->user_id) {
-            abort(403, 'Вы не являетесь владельцем этого поста и не можете его удалить');
-        }
-        $post->update(['description'=>$bioRef]);
+        $this->post->updateDescription($postId,$bioRef);
         return response()->json(['Success' => true,'status' => 200]);
+    }
+
+    public function addImage($postId,Request $request){
+        $this->post->addAnotherPostImageOrVideo($postId,$request);
+        return response()->json(['Success'=>true,'status'=>200]);
+    }
+
+    public function getPost($postID) {
+        $post = Posts::FindOrFail($postID);
+        return response()->json($post);
+        //TODO: сделать это грамотно
     }
 }
