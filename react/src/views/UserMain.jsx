@@ -12,6 +12,8 @@ export default function UserMain() {
   const [likesData, setLikesData] = useState([]);
   const { user } = useStateContext();
   const [isOwner, setIsOwner] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [newCommentText, setNewCommentText] = useState('');
   const navigate = useNavigate();
 
   axiosClient.get('user_main').then(({data})=>{
@@ -36,6 +38,9 @@ export default function UserMain() {
       const likes = likesResponse.data.likes;
       setPostsData(posts);
       setLikesData(likes);
+      posts.forEach(post => {
+        fetchDataComments(post.id);
+      });
     }
     catch (error)
     {
@@ -56,17 +61,43 @@ export default function UserMain() {
     );
   };
 
-  //TODO: поправить функцию
   const updatePostImagesOrVideosNumbered = async (postId) => {
     try {
-      const response = await axiosClient.get(`/posts/${postId}`);
-      // setPostsData(postsData.map(post => (post.id === postId ? response.data : post)));
-      console.log(response.data)
+      const response = await axiosClient.get(`posts/select_post/${postId}`);
+      setPostsData(postsData.map(post => (post.id === postId ? response.data : post)));
     } catch (error) {
       toast("Произошла ошибка при обновлении поста");
     }
   };
 
+  async function fetchDataComments(postId) {
+    try {
+      const response = await axiosClient.get(`/posts/${postId}/comments`);
+      setComments(response.data);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
+  }
+
+  const filterComments = (postId) => {
+    const filtered = comments.filter(comment => comment.post_id === postId);
+    setComments(filtered);
+  };
+
+  const handleCommentSubmit = async (postId,postUserId) => {
+    try {
+      const response = await axiosClient.post(`/posts/${postId}/comments`, {
+        user_id: postUserId,
+        post_id: postId,
+        content: newCommentText,
+      });
+      const updatedComments = await axiosClient.get(`/posts/${postId}/comments`);
+      setComments(updatedComments.data);
+      setNewCommentText('');
+    } catch (error) {
+      console.error('Error creating comment:', error);
+    }
+  };
 
   const handleLikeClick = async (postId) => {
     try {
@@ -102,6 +133,10 @@ export default function UserMain() {
   };
   useEffect(() => {
     fetchData();
+    fetchDataComments();
+    postsData.forEach(post => {
+      filterComments(post.id);
+    });
   }, []);
 
   return (
@@ -115,7 +150,7 @@ export default function UserMain() {
       </header>
       <main>
         {postsData.map(post => (
-          <Post key={post.id} post={post} onLikeClick={handleLikeClick} likesData={likesData} user={user} isOwner={post.user.id == user.id} updatePostsList={updatePostsList} updatePostDescription={updatePostDescription} updatePostImagesOrVideosNumbered={updatePostImagesOrVideosNumbered}/>
+          <Post key={post.id} post={post} onLikeClick={handleLikeClick} likesData={likesData} user={user} isOwner={post.user.id == user.id} updatePostsList={updatePostsList} updatePostDescription={updatePostDescription} updatePostImagesOrVideosNumbered={updatePostImagesOrVideosNumbered} comments={comments} setComments={setComments} handleCommentSubmit={handleCommentSubmit} newCommentText={newCommentText} setNewCommentText={setNewCommentText}/>
         ))}
       </main>
       <Toaster />

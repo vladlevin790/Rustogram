@@ -13,6 +13,7 @@ import Messages from "./views/Messages.jsx";
 import Profile from "./views/Profile.jsx";
 import CreationPost from "./views/CreationPost.jsx";
 import InsertUpdateUser from "./views/InsertUpdateUser.jsx";
+import AnotherUserProfile from "./views/AnotherUserProfile.jsx";
 
 const router = createBrowserRouter([
   {
@@ -54,6 +55,10 @@ const router = createBrowserRouter([
       {
         path: '/profile',
         element: <Profile/>
+      },
+      {
+        path: '/user_profile/:userId',
+        element: <AnotherUserProfile />,
       },
       {
         path: 'create_post',

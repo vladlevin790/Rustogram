@@ -16,7 +16,8 @@ Route::get('/storage/images/{filename}', function ($filename) {
 })->where('filename', '.*');
 Route::apiResource('/posts', PostsController::class)->except(['index']);
 require __DIR__.'/comments_routes.php';
-Route::get('/posts/{postId}',[PostsController::class,'getPost']);
+Route::get('/posts/select_post/{postId}',[PostsController::class,'getPost']);
 Route::delete('/posts/{postId}', [PostsController::class, 'destroy']);
 Route::put('/posts/{postId}/{bioRef}', [PostsController::class, 'updatePostDescription']);
 Route::post('/posts/{postId}/add_image', [PostsController::class, 'addImage']);
+

@@ -44,6 +44,7 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         $user = $request->user();
+        $user->update(['is_online'=> false]);
         return $this->authService->revokeToken($user);
     }
 }

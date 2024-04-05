@@ -92,6 +92,7 @@ export default function Profile() {
     setUserOnlineStatus(user.is_online ? "Онлайн" : `${user.gender == 'female' ? 'была' : 'был'} в сети ${formatLastOnline(user.last_online)}`);
   }, [user.is_online, user.last_online]);
 
+
   const formatLastOnline = (lastOnline) => {
     if (!lastOnline) return '';
 

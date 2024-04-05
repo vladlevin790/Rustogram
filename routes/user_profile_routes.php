@@ -9,3 +9,4 @@ Route::get('/user_profile',function (Request $request) {
     return $request->user();
 });
 Route::post('/user_profile/edit',[UserSettingsController::class,'updateUser']);
+

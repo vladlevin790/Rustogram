@@ -2,6 +2,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\MorePost;
+use App\Models\User;
 use App\Services\Post;
 use App\Http\Controllers\Controller;
 use App\Models\Posts;
@@ -53,8 +54,10 @@ class PostsController extends Controller
     }
 
     public function getPost($postID) {
-        $post = Posts::FindOrFail($postID);
-        return response()->json($post);
-        //TODO: сделать это грамотно
+        return response()->json($this->post->getOnePost($postID));
+    }
+
+    public function getAnotherUserPost($userID) {
+        return response()->json($this->post->getAnotherUserPosts($userID));
     }
 }

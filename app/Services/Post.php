@@ -81,9 +81,21 @@ class Post
         if ($user->id !== $post->user_id) {
             abort(403, 'Вы не являетесь владельцем этого поста и не можете его удалить');
         }
+        $post->comments()->delete();
+        $post->likes()->delete();
+        $post->hashtags()->delete();
         $imagePath = str_replace('http://localhost:8000/storage/', 'public/', $post->image_path);
+        $videoPath = str_replace('http://localhost:8000/storage/', 'public/', $post->video_path);
         Storage::delete($imagePath);
-        MorePost::where('post_id', $postId)->delete();
+        Storage::delete($videoPath);
+        $morePost = MorePost::where('post_id', $postId)->get();
+        foreach ($morePost as $more) {
+            $moreImagePath = str_replace('http://localhost:8000/storage/', 'public/', $more->image_path);
+            $moreVideoPath = str_replace('http://localhost:8000/','public/', $more->video_path);
+            Storage::delete($moreImagePath);
+            Storage::delete($moreVideoPath);
+            $more->delete();
+        }
         $post->delete();
         return null;
     }
@@ -128,6 +140,79 @@ class Post
                 'post_id'=>$postId,
             ]);
         }
+    }
+
+    public function getOnePost($postID) {
+        $post = Posts::FindOrFail($postID);
+        $morePost = MorePost::where('post_id', $postID);
+        $imagePath = $morePost->pluck('image_path')->toArray();
+        $videoPath = $morePost->pluck('video_path')->toArray();
+        return [
+            'id' => $post->id,
+            'image_path' => $post->image_path,
+            'more_image_path' => $imagePath,
+            'video_path' => $post->video_path,
+            'more_video_path' => $videoPath,
+            'description' => $post->description,
+            'created_at' => $post->created_at,
+            'updated_at' => $post->updated_at,
+            'user' => [
+                'id' => $post->user->id,
+                'name' => $post->user->name,
+                'avatar' => $post->user->avatar,
+            ],
+            'comments' => $post->comments,
+            'likes' => $post->likes->count(),
+            'hashtags' => $post->hashtags,
+        ];
+    }
+
+    public function getAnotherUserPosts($userID) {
+        $post = Posts::where('user_id',$userID)->get();
+        Log::info("post",['post',$post]);
+        $formattedPosts = $post->map(function ($post) {
+            $morePost = MorePost::where('post_id', $post->id);
+            $imagePath = $morePost->pluck('image_path')->toArray();
+            $videoPath = $morePost->pluck('video_path')->toArray();
+            if ($morePost){
+                return [
+                    'id' => $post->id,
+                    'image_path' => $post->image_path,
+                    'more_image_path' => $imagePath,
+                    'video_path' => $post->video_path,
+                    'more_video_path' => $videoPath,
+                    'description' => $post->description,
+                    'created_at' => $post->created_at,
+                    'updated_at' => $post->updated_at,
+                    'user' => [
+                        'id' => $post->user->id,
+                        'name' => $post->user->name,
+                        'avatar' => $post->user->avatar,
+                    ],
+                    'comments' => $post->comments,
+                    'likes' => $post->likes->count(),
+                    'hashtags' => $post->hashtags,
+                ];
+            } else {
+                return [
+                    'id' => $post->id,
+                    'image_path' => $post->image_path,
+                    'video_path' => $post->video_path,
+                    'description' => $post->description,
+                    'created_at' => $post->created_at,
+                    'updated_at' => $post->updated_at,
+                    'user' => [
+                        'id' => $post->user->id,
+                        'name' => $post->user->name,
+                        'avatar' => $post->user->avatar,
+                    ],
+                    'comments' => $post->comments,
+                    'likes' => $post->likes->count(),
+                    'hashtags' => $post->hashtags,
+                ];
+            }
+        });
+        return $formattedPosts;
     }
 
 }

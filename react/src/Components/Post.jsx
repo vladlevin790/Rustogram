@@ -1,4 +1,4 @@
-import React, {useRef, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Burger from "./Burger.jsx";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -11,7 +11,7 @@ import axiosClient from "../axios-client.js";
 import toast from "react-hot-toast";
 import Slider from "react-slick";
 
-export default function Post({ post, onLikeClick, likesData, user, isOwner, updatePostsList, updatePostDescription, updatePostImagesOrVideosNumbered }) {
+export default function Post({ post, onLikeClick, likesData, user, isOwner, updatePostsList, updatePostDescription, updatePostImagesOrVideosNumbered, comments, handleCommentSubmit, newCommentText, setNewCommentText}) {
   const isImage = post.image_path !== null;
   const isVideo = post.video_path !== null;
   const isAvatar = post.user.avatar !== null;
@@ -23,6 +23,7 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const sliderRef = useRef(null);
+  const urlName = `${post.user.id}`
 
   let bioRef = useRef();
   const isLikedByUser = likesData.some(
@@ -54,10 +55,9 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
 
       updatePostImagesOrVideosNumbered(post.id);
     } catch (error) {
-      // Обработайте ошибку
+
     }
   };
-
 
   const handleDeletePost = async () => {
     try {
@@ -87,6 +87,10 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
     return ['лайк', 'лайка', 'лайков'][count % 100 > 4 && count % 100 < 20 ? 2 : cases[Math.min(count % 10, 5)]];
   }
 
+  const handleNewCommentSubmit = () => {
+    handleCommentSubmit(post.id,post.user.id,newCommentText,setNewCommentText);
+  }
+
   const settings = {
     dots: true,
     infinite: true,
@@ -104,7 +108,7 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
         {(isImage || isVideo || hasMoreImages || hasMoreVideos) && (
           <>
             {isImage && !hasMoreImages && <img src={post.image_path} alt={post.altText} className="rounded-md mb-2 h-[691px]"/>}
-            {isVideo && (
+            {isVideo && !hasMoreVideos (
               <div className="relative mb-2">
                 <video src={post.video_path} alt={post.altText} className="rounded-md w-full h-[691px]" controls></video>
               </div>
@@ -169,32 +173,46 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
           {isComment ? (
             <div className="flex flex-col items-center w-full">
               <div className="flex justify-between ml-2 w-[740px] mt-5">
-                <Link to="/user_profile" className="flex items-center gap-2 w-full ml-6">
-                  <div className="flex  items-center justify-center p-4 bg-gray-300 rounded-full w-[37px] h-[39px]">
-                    {!isAvatar && (<img src="../../src/media/icons/user.png" alt="" className="w-[68px]"/>)}
-                    {isAvatar && (<img src={user.avatar} alt=""/>)}
+                <Link to={`/user_profile/${urlName}`} className="flex items-center gap-2 w-full ml-6">
+                  <div className="flex  items-center justify-center p-2 bg-gray-300 rounded-full w-[60px] h-[60px]">
+                    {isAvatar ? <img className="w-[50px] h-[50px] rounded-full" src={post.user.avatar} alt="" /> : <img src="../../src/media/icons/user.svg" className="h-[39px] w-[37px]" />}
                   </div>
                   <h2 className="font-semibold text-[30px] font-roboto">{post.user.name}</h2>
                 </Link>
                 <div className="flex items-center w-[200px] font-semibold text-[20px]">
                   <h2>{post.likes} {formatLikesWord(post.likes)}</h2>
+                </div>
+              </div>
+              <h2 className="font-semibold mb-5">Комментарии</h2>
+              <PostComments postComments={comments}/>
+              <div className="flex items-center mb-2 justify-center gap-2">
+                <input
+                  className="flex p-2 border border-gray-300 rounded-md w-[350px] "
+                  value={newCommentText}
+                  onChange={event => setNewCommentText(event.target.value)}
+                  placeholder="Написать комментарий..."
+                />
+                <button
+                  className="p-2 h-[40px] bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                  onClick={handleNewCommentSubmit}
+                  disabled={!newCommentText}
+                >
+                  Отправить
+                </button>
               </div>
             </div>
-            <h2 className="font-semibold mb-5">Комментарии</h2>
-            <PostComments post={post} isComment={isComment} setIsComment={setIsComment} />
-          </div>
-        ) : (
-          <div className="flex justify-between w-[740px]">
-            <div className="flex gap-2 relative">
-              <motion.div
-                className={`w-30 cursor-pointer ${isLikedByUser ? 'fill-red-400 fill' : ''}`}
-                whileTap={{ scale: 1.2 }}
-                onClick={handleLikeButtonClick}
-              >
-                <LikeIcon className={`w-30 h-full ${isLiked ? 'animate-like' : ''}`} />
-              </motion.div>
-              {isLiked && (
-                <div className="absolute inset-0 bg-red-400 rounded-full pointer-events-none z-0" style={{ zIndex: -1 }} />
+          ) : (
+            <div className="flex justify-between w-[740px]">
+              <div className="flex gap-2 relative">
+                <motion.div
+                  className={`w-30 cursor-pointer ${isLikedByUser ? 'fill-red-400 fill' : ''}`}
+                  whileTap={{scale: 1.2}}
+                  onClick={handleLikeButtonClick}
+                >
+                  <LikeIcon className={`w-30 h-full ${isLiked ? 'animate-like' : ''}`}/>
+                </motion.div>
+                {isLiked && (
+                  <div className="absolute inset-0 bg-red-400 rounded-full pointer-events-none z-0" style={{ zIndex: -1 }} />
               )}
               <motion.div className={`w-30 cursor-pointer`}
                           whileTap={{ scale: 1.2 }}
@@ -206,7 +224,7 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
             <BookMarkIcon className="w-47 hover:fill-amber-300 transition cursor-pointer" />
           </div>
         )}
-        {!isComment && (<Link to="/user_profile" className="flex items-center gap-2 w-full ml-6">
+        {!isComment && (<Link to={`/user_profile/${urlName}`} className="flex items-center gap-2 w-full ml-6">
           {isAvatar ? <img className="w-[50px] h-[50px] rounded-full" src={post.user.avatar} alt="" /> : <img src="../../src/media/icons/user.svg" className="h-[39px] w-[37px]" />}
           <h2 className="font-semibold text-[30px] font-roboto">{post.user.name}</h2>
         </Link>)}
@@ -223,12 +241,65 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
       </>)}
       {postEdit && (
         <>
-          {isImage && <img src={post.image_path} alt={post.altText} className="rounded-md mb-2 h-[691px] w-[770px]"/>}
-          {isVideo && (
+          {isImage && !hasMoreImages && <img src={post.image_path} alt={post.altText} className="rounded-md mb-2 h-[691px]"/>}
+          {isVideo && !hasMoreVideos (
             <div className="relative mb-2">
-              <video src={post.video_path} alt={post.altText} className="rounded-md w-full h-[691px] w-[770px]"
-                     controls></video>
+              <video src={post.video_path} alt={post.altText} className="rounded-md w-full h-[691px]" controls></video>
             </div>
+          )}
+          {hasMoreImages && (
+            <>
+              <Slider {...settings} ref={sliderRef}>
+                {post.image_path && (
+                  <div className="relative">
+                    <img src={post.image_path} alt="Main Image" className="rounded-md mb-2 h-[691px] w-[770px]"/>
+                  </div>
+                )}
+                {post.more_image_path.map((image, index) => (
+                  <div key={index}>
+                    <img src={image} alt={`Slide ${index}`} className="rounded-md mb-2 h-[691px] w-[770px]"/>
+                  </div>
+                ))}
+              </Slider>
+              <button className="absolute top-80 left-4 bg-gray-50 p-2 rounded-full opacity-45" onClick={() => sliderRef.current.slickPrev()}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                     stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <button className="absolute top-80 right-5 bg-gray-50 p-2 rounded-full opacity-45" onClick={() => sliderRef.current.slickNext()}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                     stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </>
+          )}
+          {hasMoreVideos && (
+            <>
+              <Slider {...settings} ref={sliderRef}>
+                {post.more_video_path.map((video, index) => (
+                  <div key={index}>
+                    <video src={video} alt={`Slide ${index}`} className="rounded-md w-full h-[691px]"
+                           controls></video>
+                  </div>
+                ))}
+              </Slider>
+              <button className="absolute top-80 left-4 bg-gray-50 p-2 rounded-full opacity-45"
+                      onClick={() => sliderRef.current.slickPrev()}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                     stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7"/>
+                </svg>
+              </button>
+              <button className="absolute top-80 right-5 bg-gray-50 p-2 rounded-full opacity-45"
+                      onClick={() => sliderRef.current.slickNext()}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                     stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/>
+                </svg>
+              </button>
+            </>
           )}
           <form onSubmit={handleEditSubmit} className="p-4">
             <div className="flex items-center gap-2">

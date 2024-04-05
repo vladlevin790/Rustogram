@@ -63,19 +63,19 @@ export default function Comment({ comment }) {
   };
 
   return (
-    <div className="flex items-center mb-4 rounded w-[363px] bg-comment p-4 justify-between">
+    <div className="flex items-center mb-4 rounded w-full bg-comment p-4 justify-between">
       <div className="flex">
         <div className="flex-shrink-0">
             {!isAvatar && (<img className="w-[37px] h-[39px]" src="../../src/media/icons/user.png" alt="" />)}
             {isAvatar && (<img className="w-[40px] h-[40px] rounded-full" src={comment.user.avatar} alt="" />)}
         </div>
-        <div className="ml-4">
+        <div className="ml-4 font-roboto">
           <h2 className="text-sm font-bold text-gray-900">{comment.user.name}</h2>
-          <p className="text-sm text-gray-500 font-semibold">{formattedTime}</p>
+          <p className="text-sm text-gray-500 ">{formattedTime}</p>
         </div>
       </div>
       <p className="text-sm max-w-[100px] overflow-hidden overflow-ellipsis">
-        <span className="whitespace-normal break-words font-semibold">{comment.content}</span>
+        <span className="whitespace-normal break-words font-semibold font-roboto mr-5 text-xl">{comment.content}</span>
       </p>
     </div>
   );
