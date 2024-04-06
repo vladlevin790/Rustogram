@@ -22,6 +22,8 @@ export default function Profile() {
   const { user, setUser } = useStateContext();
   const [selectedPost, setSelectedPost] = useState(null);
   const [likesData, setLikesData] = useState([]);
+  const [comments, setComments] = useState([]);
+  const [newCommentText, setNewCommentText] = useState('');
 
   const fetchData = async () => {
     try {
@@ -78,6 +80,60 @@ export default function Profile() {
     }
   };
 
+  const updatePostsList = (postId) => {
+    setPostsData(postsData => postsData.filter(post => post.id !== postId));
+  };
+
+  const updatePostDescription = (postId, postBio) => {
+    setPostsData(postsData => postsData.map(
+      post => {
+        const updatedPost = post.id === postId ? { ...post, description: postBio } : post;
+        setSelectedPost(updatedPost);
+        return updatedPost;
+      })
+    );
+  };
+
+  const updatePostImagesOrVideosNumbered = async (postId) => {
+    try {
+      const response = await axiosClient.get(`posts/select_post/${postId}`);
+      const updatedPost = response.data;
+
+      setPostsData(postsData =>
+        postsData.map(post => (post.id === postId ? updatedPost : post))
+      );
+
+      if (selectedPost && selectedPost.id === postId) {
+        setSelectedPost(updatedPost);
+      }
+    } catch (error) {
+      toast("Произошла ошибка при обновлении поста");
+    }
+  };
+
+
+  async function fetchDataComments(postId) {
+    try {
+      const response = await axiosClient.get(`/posts/${postId}/comments`);
+      setComments(response.data);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    }
+  }
+  const handleCommentSubmit = async (postId,postUserId) => {
+    try {
+      const response = await axiosClient.post(`/posts/${postId}/comments`, {
+        user_id: postUserId,
+        post_id: postId,
+        content: newCommentText,
+      });
+      const updatedComments = await axiosClient.get(`/posts/${postId}/comments`);
+      setComments(updatedComments.data);
+      setNewCommentText('');
+    } catch (error) {
+      console.error('Error creating comment:', error);
+    }
+  };
 
   useEffect(() => {
     setIsAvatar(user.avatar !== null);
@@ -86,6 +142,7 @@ export default function Profile() {
 
   useEffect(() => {
     fetchData();
+    fetchDataComments();
   }, []);
 
   useEffect(() => {
@@ -288,7 +345,7 @@ export default function Profile() {
                }
              }}>
           <div className="max-w-screen-lg mx-auto mt-6 max-h-screen overflow-y-auto">
-            <Post post={selectedPost} onLikeClick={handleLikeClick} likesData={likesData} user={user}/>
+            <Post post={selectedPost} onLikeClick={handleLikeClick} isOwner={selectedPost.user.id == user.id} likesData={likesData} user={user} comments={comments} handleCommentSubmit={handleCommentSubmit} newCommentText={newCommentText} setNewCommentText={setNewCommentText} updatePostDescription={updatePostDescription} updatePostImagesOrVideosNumbered={updatePostImagesOrVideosNumbered} updatePostsList={updatePostsList} />
           </div>
         </div>
       )}

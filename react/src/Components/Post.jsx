@@ -22,6 +22,7 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
   const [postEdit, setPostEdit] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [commentsPost,setCommentsPost] = useState([]);
   const sliderRef = useRef(null);
   const urlName = `${post.user.id}`
 
@@ -30,6 +31,10 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
     like => like?.post?.id === post.id && like?.user?.id === user?.id
   );
 
+  const filterComments = () => {
+    const filtered = comments.filter(comment => comment.post_id === post.id);
+    setCommentsPost(filtered);
+  };
   const handleEditSubmit = async (e) => {
       e.preventDefault();
       try {
@@ -98,6 +103,10 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
     slidesToShow: 1,
     slidesToScroll: 1
   };
+
+  useEffect(()=>{
+    filterComments();
+  },[commentsPost])
 
   return (
     <article className="flex static flex-col w-[770px]  bg-[#F9F8F8] border border-gray-300 rounded-md shadow-md mb-4 relative">
@@ -184,7 +193,7 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
                 </div>
               </div>
               <h2 className="font-semibold mb-5">Комментарии</h2>
-              <PostComments postComments={comments}/>
+              <PostComments postComments={commentsPost}/>
               <div className="flex items-center mb-2 justify-center gap-2">
                 <input
                   className="flex p-2 border border-gray-300 rounded-md w-[350px] "

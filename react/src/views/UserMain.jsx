@@ -78,12 +78,6 @@ export default function UserMain() {
       console.error('Error fetching comments:', error);
     }
   }
-
-  const filterComments = (postId) => {
-    const filtered = comments.filter(comment => comment.post_id === postId);
-    setComments(filtered);
-  };
-
   const handleCommentSubmit = async (postId,postUserId) => {
     try {
       const response = await axiosClient.post(`/posts/${postId}/comments`, {
@@ -134,9 +128,6 @@ export default function UserMain() {
   useEffect(() => {
     fetchData();
     fetchDataComments();
-    postsData.forEach(post => {
-      filterComments(post.id);
-    });
   }, []);
 
   return (

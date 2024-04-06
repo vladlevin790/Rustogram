@@ -30,5 +30,8 @@ class Posts extends Model
     {
         return $this->hasMany(Hashtag::class,'post_id');
     }
-
+    public function morePost()
+    {
+        return $this->hasMany(MorePost::class,'post_id');
+    }
 }

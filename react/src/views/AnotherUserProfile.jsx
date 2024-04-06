@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axiosClient from "../axios-client.js";
-import Burger from "../Components/Burger.jsx";
 import UserProfilePost from "../Components/UserProfilePost.jsx";
 import Post from "../Components/Post.jsx";
 import toast, { Toaster } from "react-hot-toast";

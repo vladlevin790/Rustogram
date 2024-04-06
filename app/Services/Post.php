@@ -1,6 +1,7 @@
 <?php
 namespace App\Services;
 
+use App\Http\Resources\PostResource;
 use App\Models\MorePost;
 use App\Models\Posts;
 use Illuminate\Http\Request;
@@ -12,64 +13,33 @@ class Post
 {
 
     public function selectAllPost(){
-        $posts = Posts::with('user', 'comments', 'likes', 'hashtags')->get();
-
-        $formattedPosts = $posts->map(function ($post) {
-            $morePost = MorePost::where('post_id', $post->id);
-            $imagePath = $morePost->pluck('image_path')->toArray();
-            $videoPath = $morePost->pluck('video_path')->toArray();
-            if ($morePost){
-                return [
-                    'id' => $post->id,
-                    'image_path' => $post->image_path,
-                    'more_image_path' => $imagePath,
-                    'video_path' => $post->video_path,
-                    'more_video_path' => $videoPath,
-                    'description' => $post->description,
-                    'created_at' => $post->created_at,
-                    'updated_at' => $post->updated_at,
-                    'user' => [
-                        'id' => $post->user->id,
-                        'name' => $post->user->name,
-                        'avatar' => $post->user->avatar,
-                    ],
-                    'comments' => $post->comments,
-                    'likes' => $post->likes->count(),
-                    'hashtags' => $post->hashtags,
-                ];
-            } else {
-                return [
-                    'id' => $post->id,
-                    'image_path' => $post->image_path,
-                    'video_path' => $post->video_path,
-                    'description' => $post->description,
-                    'created_at' => $post->created_at,
-                    'updated_at' => $post->updated_at,
-                    'user' => [
-                        'id' => $post->user->id,
-                        'name' => $post->user->name,
-                        'avatar' => $post->user->avatar,
-                    ],
-                    'comments' => $post->comments,
-                    'likes' => $post->likes->count(),
-                    'hashtags' => $post->hashtags,
-                ];
-            }
-        });
-
-        return $formattedPosts;
+        $posts = Posts::with('user', 'comments', 'likes', 'hashtags', 'morePost')->get();
+        foreach ($posts as $post) {
+            $post->load('morePost');
+            $post->load('user');
+            $post->load('comments');
+            $post->load('likes');
+            $post->load('hashtags');
+        }
+        return PostResource::collection($posts);
     }
 
     public function createPost(Request $request)
     {
         $user = Auth::user();
         $data = $request->validate([
-            'image_path' => 'required|image|mimes:jpeg,png,jpg,gif',
+            'image_path' => 'nullable|image|mimes:jpeg,png,jpg,gif',
             'video_path' => 'nullable|string',
             'description' => 'nullable|string',
         ]);
-        $imagePath = $request->file('image_path')->store('public/images');
-        $data['image_path'] = url(\Storage::url($imagePath));
+        if ($request->hasFile('image_path')) {
+            $imagePath = $request->file('image_path')->store('public/images');
+            $data['image_path'] = url(\Storage::url($imagePath));
+        }
+        if ($request->hasFile('video_path')) {
+            $videoPath = $request->file('video_path')->store('public/images');
+            $data['video_path'] = url(\Storage::url($videoPath));
+        }
         $posts = $user->posts()->create($data);
         return $posts;
     }
@@ -143,76 +113,17 @@ class Post
     }
 
     public function getOnePost($postID) {
-        $post = Posts::FindOrFail($postID);
-        $morePost = MorePost::where('post_id', $postID);
-        $imagePath = $morePost->pluck('image_path')->toArray();
-        $videoPath = $morePost->pluck('video_path')->toArray();
-        return [
-            'id' => $post->id,
-            'image_path' => $post->image_path,
-            'more_image_path' => $imagePath,
-            'video_path' => $post->video_path,
-            'more_video_path' => $videoPath,
-            'description' => $post->description,
-            'created_at' => $post->created_at,
-            'updated_at' => $post->updated_at,
-            'user' => [
-                'id' => $post->user->id,
-                'name' => $post->user->name,
-                'avatar' => $post->user->avatar,
-            ],
-            'comments' => $post->comments,
-            'likes' => $post->likes->count(),
-            'hashtags' => $post->hashtags,
-        ];
+        $post = Posts::with('morePost')->findOrFail($postID);
+        return new PostResource($post);
     }
 
     public function getAnotherUserPosts($userID) {
-        $post = Posts::where('user_id',$userID)->get();
-        Log::info("post",['post',$post]);
-        $formattedPosts = $post->map(function ($post) {
-            $morePost = MorePost::where('post_id', $post->id);
-            $imagePath = $morePost->pluck('image_path')->toArray();
-            $videoPath = $morePost->pluck('video_path')->toArray();
-            if ($morePost){
-                return [
-                    'id' => $post->id,
-                    'image_path' => $post->image_path,
-                    'more_image_path' => $imagePath,
-                    'video_path' => $post->video_path,
-                    'more_video_path' => $videoPath,
-                    'description' => $post->description,
-                    'created_at' => $post->created_at,
-                    'updated_at' => $post->updated_at,
-                    'user' => [
-                        'id' => $post->user->id,
-                        'name' => $post->user->name,
-                        'avatar' => $post->user->avatar,
-                    ],
-                    'comments' => $post->comments,
-                    'likes' => $post->likes->count(),
-                    'hashtags' => $post->hashtags,
-                ];
-            } else {
-                return [
-                    'id' => $post->id,
-                    'image_path' => $post->image_path,
-                    'video_path' => $post->video_path,
-                    'description' => $post->description,
-                    'created_at' => $post->created_at,
-                    'updated_at' => $post->updated_at,
-                    'user' => [
-                        'id' => $post->user->id,
-                        'name' => $post->user->name,
-                        'avatar' => $post->user->avatar,
-                    ],
-                    'comments' => $post->comments,
-                    'likes' => $post->likes->count(),
-                    'hashtags' => $post->hashtags,
-                ];
-            }
-        });
-        return $formattedPosts;
+        $posts = Posts::where('user_id',$userID)->with('morePost')->get();
+        foreach ($posts as $post) {
+            $post->load('morePost');
+        }
+        return PostResource::collection($posts);
     }
+
 
 }
