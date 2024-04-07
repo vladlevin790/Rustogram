@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\api;
+namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\StoriesResource;
@@ -54,7 +54,7 @@ class StoriesController extends Controller
             Storage::delete($imagePath);
             Storage::delete($videoPath);
             $story->delete();
-            return response()->json(['Success' => true, 'status' => 200);
+            return response()->json(['Success' => true, 'status' => 200]);
         } catch (\Exception $e) {
             return response()->json(['Success' => false]);
         }

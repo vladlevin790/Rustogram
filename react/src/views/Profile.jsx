@@ -5,6 +5,7 @@ import Burger from "../Components/Burger.jsx";
 import UserProfilePost from "../Components/UserProfilePost.jsx";
 import toast, {Toaster} from "react-hot-toast";
 import Post from "../Components/Post.jsx";
+import Story from "../Components/Story.jsx";
 
 export default function Profile() {
   const [isAvatar, setIsAvatar] = useState(false);
@@ -24,6 +25,13 @@ export default function Profile() {
   const [likesData, setLikesData] = useState([]);
   const [comments, setComments] = useState([]);
   const [newCommentText, setNewCommentText] = useState('');
+  const [isCreateStory, setIsCreateStory] = useState(false);
+  const [storyData,setStoryData] = useState([]);
+  const [storyImage, setStoryImage] = useState(null);
+  const [storyVideo, setStoryVideo] = useState(null);
+  const [storyDescription, setStoryDescription] = useState('');
+  const [selectedStory, setSelectedStory] = useState(null);
+
 
   const fetchData = async () => {
     try {
@@ -75,6 +83,15 @@ export default function Profile() {
       } else {
         toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
       }
+    } catch (error) {
+      toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
+    }
+  };
+
+  const fetchDataStories = async () => {
+    try {
+      const response = await axiosClient.get('/stories');
+      setStoryData(response.data);
     } catch (error) {
       toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
     }
@@ -135,6 +152,25 @@ export default function Profile() {
     }
   };
 
+  const handleStorySubmit = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('image_path', storyImage);
+      formData.append('video_path', storyVideo);
+      formData.append('description', storyDescription);
+      const response = await axiosClient.post('/stories/create', formData);
+      if (response.data.Success) {
+        toast.success('История успешно создана');
+        setIsCreateStory(false);
+      } else {
+        toast.error('Произошла ошибка при создании истории');
+      }
+    } catch (error) {
+      toast.error('Произошла ошибка при создании истории');
+    }
+  };
+
+
   useEffect(() => {
     setIsAvatar(user.avatar !== null);
     setIsBio(user.bio !== null);
@@ -143,6 +179,7 @@ export default function Profile() {
   useEffect(() => {
     fetchData();
     fetchDataComments();
+    fetchDataStories();
   }, []);
 
   useEffect(() => {
@@ -200,17 +237,55 @@ export default function Profile() {
     }
   };
 
+  const handleStoryClick = (story) => {
+    setSelectedStory(story);
+  };
+
   const postUser = postsData.filter(post => post.user.id === user.id);
+  const filteredStories = storyData.filter(story => story.user.id === user.id);
 
   return (
     <section className="flex flex-col mt-16">
       <article className="flex ml-60">
         <div className=" flex flex-col gap-2 w-[178px]">
-          {isAvatar && (<img className="rounded-full w-[130px] h-[130px]" src={user.avatar} alt="" />)}
-          {!isAvatar && (<div className="flex  items-center justify-center p-4 bg-gray-300 rounded-full w-[130px] h-[130px]">
-            <img src="../../src/media/icons/user.png" alt="" className="w-[68px]" />
-          </div>)}
-          <button className="flex items-center font-semibold bg-gray-300 h-8 p-5 rounded" onClick={() => { setIsModal(!isModal) }}><Burger className="w-6 mt-2" />Редактировать</button>
+          {isAvatar && (<img className="rounded-full w-[130px] h-[130px]" src={user.avatar} alt=""/>)}
+          {!isAvatar && (
+            <div className="flex  items-center justify-center p-4 bg-gray-300 rounded-full w-[130px] h-[130px]">
+              <img src="../../src/media/icons/user.png" alt="" className="w-[68px]"/>
+            </div>)}
+          <button className="flex items-center font-semibold bg-gray-300 h-8 p-5 rounded" onClick={() => {
+            setIsModal(!isModal)
+          }}><Burger className="w-6 mt-2"/>Редактировать
+          </button>
+          <div className="flex gap-4 mt-6 w-[1000px]">
+            <button className="bg-gray-300 py-9 px-[52px] rounded-full text-white font-bold text-4xl font-roboto" onClick={() => setIsCreateStory(true)}>
+              +
+            </button>
+            {filteredStories.map(story => (
+              <div className="relative cursor-pointer">
+                <Story key={story.id} story={story} onClick={() => handleStoryClick(story)} />
+                <button className="absolute top-0 left-0 w-full h-full  " onClick={()=> setSelectedStory(story)}></button>
+              </div>
+            ))}
+            {selectedStory && (
+              <div className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center" onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  setSelectedStory(null);
+                }
+              }}>
+                <div className="max-w-md mx-auto bg-white p-6 rounded-lg">
+                  <h2 className="text-xl font-bold mb-4">{selectedStory.description}</h2>
+                  {selectedStory.image_path && (
+                    <img src={selectedStory.image_path} alt="Story" className="w-full mb-4" />
+                  )}
+                  {selectedStory.video_path && (
+                    <video controls src={selectedStory.video_path} className="w-full mb-4"></video>
+                  )}
+                </div>
+              </div>
+            )}
+
+          </div>
           {isModal && (
             <div className="fixed inset-0 overflow-y-auto flex items-center justify-center z-50">
               <div className="fixed inset-0 transition-opacity">
@@ -220,7 +295,7 @@ export default function Profile() {
                   }
                 }}></div>
               </div>
-              <div className="relative bg-white rounded-lg shadow-lg max-w-lg mx-auto p-6 w-[550px]" >
+              <div className="relative bg-white rounded-lg shadow-lg max-w-lg mx-auto p-6 w-[550px]">
                 <form onSubmit={handleSubmit}>
                   <label htmlFor="nickname" className="block mb-4 font-roboto font-weight-bolder text-xl">
                     Изменить никнейм
@@ -326,6 +401,19 @@ export default function Profile() {
           <p className="font-semibold font-roboto text-2xl">Дата рождения: {new Date(user.birthday).toLocaleDateString('ru-RU',{year: 'numeric', month: 'long', day: 'numeric'})}</p>
           <p className="font-semibold font-roboto text-2xl">Пол: {user.gender == 'female' ? 'Женский' : 'Мужской'}</p>
         </div>
+        {isCreateStory && (
+          <div className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center">
+            <div className="max-w-md mx-auto bg-white p-6 rounded-lg">
+              <h2 className="text-xl font-bold mb-4">Создать историю</h2>
+              <input type="file" accept="image/*" onChange={(e) => setStoryImage(e.target.files[0])} />
+              <input type="file" accept="video/*" onChange={(e) => setStoryVideo(e.target.files[0])} />
+              <textarea value={storyDescription} onChange={(e) => setStoryDescription(e.target.value)} rows="4" placeholder="Описание истории" className="w-full mt-4 p-2 border border-gray-300 rounded" />
+              <button onClick={handleStorySubmit} className="bg-blue-500 text-white py-2 px-4 rounded mt-4">Создать</button>
+              <button onClick={() => setIsCreateStory(false)} className="bg-gray-300 text-black py-2 px-4 rounded mt-4 ml-2">Отмена</button>
+            </div>
+          </div>
+        )}
+
       </article>
       <article className="border-b mt-5 mb-5"></article>
       <article className="flex justify-between ">
