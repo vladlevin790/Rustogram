@@ -25,6 +25,12 @@ class PostsController extends Controller
         return response()->json($formattedPosts);
     }
 
+    public function subscriptionIndex($userId)
+    {
+        $formattedPosts = $this->post->selectSubscrPost($userId);
+        return response()->json($formattedPosts);
+    }
+
     public function store(Request $request)
     {
         $posts = $this->post->createPost($request);

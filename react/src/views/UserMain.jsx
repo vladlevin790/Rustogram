@@ -14,6 +14,13 @@ export default function UserMain() {
   const [isOwner, setIsOwner] = useState(false);
   const [comments, setComments] = useState([]);
   const [newCommentText, setNewCommentText] = useState('');
+  const [isCreateStory, setIsCreateStory] = useState(false);
+  const [storyData,setStoryData] = useState([]);
+  const [storyImage, setStoryImage] = useState(null);
+  const [storyVideo, setStoryVideo] = useState(null);
+  const [storyDescription, setStoryDescription] = useState('');
+  const [selectedStory, setSelectedStory] = useState(null);
+  const [currentTab, setCurrentTab] = useState("myFeed");
   const navigate = useNavigate();
 
   axiosClient.get('user_main').then(({data})=>{
@@ -21,14 +28,16 @@ export default function UserMain() {
       navigate('/user_insert_update');
     }
   })
-
   const fetchData = async () => {
-    try
-    {
-      const [postsResponse, likesResponse] = await Promise.all([
-        axiosClient.get('/posts'),
-        axiosClient.get('/getLikes')
-      ]);
+    try {
+      let postsResponse;
+      if (currentTab === "myFeed") {
+        postsResponse = await axiosClient.get(`/posts/subscription/${user.id}`);
+      } else if (currentTab === "recommendations") {
+        postsResponse = await axiosClient.get('/posts');
+      }
+
+      const likesResponse = await axiosClient.get('/getLikes');
 
       const posts = postsResponse.data.map(post => ({
         ...post,
@@ -41,9 +50,7 @@ export default function UserMain() {
       posts.forEach(post => {
         fetchDataComments(post.id);
       });
-    }
-    catch (error)
-    {
+    } catch (error) {
       console.error('Error fetching data:', error);
     }
   };
@@ -67,6 +74,14 @@ export default function UserMain() {
       setPostsData(postsData.map(post => (post.id === postId ? response.data : post)));
     } catch (error) {
       toast("Произошла ошибка при обновлении поста");
+    }
+  };
+  const fetchDataStories = async () => {
+    try {
+      const response = await axiosClient.get('/stories');
+      setStoryData(response.data);
+    } catch (error) {
+      toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
     }
   };
 
@@ -126,19 +141,26 @@ export default function UserMain() {
     }
   };
   useEffect(() => {
-    fetchData();
-    fetchDataComments();
-  }, []);
+    if(user){
+      fetchData();
+      fetchDataComments();
+      fetchDataStories();
+    }
+  }, [user, currentTab]);
 
   return (
     <div className="flex flex-col justify-center items-center">
       <header className="flex mt-[26px] mb-[7px] border-b w-[1299px] ">
         <div className="ml-[45px] flex gap-[45px] p-2">
-          <Story imageSrc="https://placekitten.com/101/101" altText="kitty" newStory={newStory} />
-          <Story imageSrc="https://placekitten.com/101/101" altText="kitty" newStory={newStory} />
-          <Story imageSrc="https://placekitten.com/101/101" altText="kitty" newStory={newStory} />
+          {storyData.map((story) => (
+            <Story key={story.id} story={story}/>)
+          )}
         </div>
       </header>
+      <div className="flex gap-20 justify-center border-b w-[1299px] mb-6">
+        <button className="mb-2 font-roboto text-3xl" onClick={()=>setCurrentTab('myFeed')}>Моя лента</button>
+        <button className="mb-2 font-roboto text-3xl" onClick={()=>setCurrentTab('recommendations')}>Рекомендации</button>
+      </div>
       <main>
         {postsData.map(post => (
           <Post key={post.id} post={post} onLikeClick={handleLikeClick} likesData={likesData} user={user} isOwner={post.user.id == user.id} updatePostsList={updatePostsList} updatePostDescription={updatePostDescription} updatePostImagesOrVideosNumbered={updatePostImagesOrVideosNumbered} comments={comments} setComments={setComments} handleCommentSubmit={handleCommentSubmit} newCommentText={newCommentText} setNewCommentText={setNewCommentText}/>

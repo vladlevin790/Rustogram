@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\PostsController;
 
 Route::post('/posts', [PostsController::class, 'store']);
 Route::get('/posts', [PostsController::class, 'index']);
+Route::get('/posts/subscription/{userId}',[PostsController::class,'subscriptionIndex']);
 Route::get('/storage/images/{filename}', function ($filename) {
     $path = storage_path("app/public/images/{$filename}");
     if (!File::exists($path)) {

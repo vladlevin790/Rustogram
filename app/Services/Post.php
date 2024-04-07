@@ -4,6 +4,7 @@ namespace App\Services;
 use App\Http\Resources\PostResource;
 use App\Models\MorePost;
 use App\Models\Posts;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -11,7 +12,22 @@ use Illuminate\Support\Facades\Storage;
 
 class Post
 {
-
+    public function selectSubscrPost($userId){
+        $user = User::with('subscriptions')->findOrFail($userId);
+        $subscribedUserIds = $user->subscriptions->pluck('owner_id')->toArray();
+        $subscribedUserIds[] = $user->id;
+        $posts = Posts::with('user', 'comments', 'likes', 'hashtags', 'morePost')
+            ->whereIn('user_id', $subscribedUserIds)
+            ->get();
+        foreach ($posts as $post) {
+            $post->load('morePost');
+            $post->load('user');
+            $post->load('comments');
+            $post->load('likes');
+            $post->load('hashtags');
+        }
+        return PostResource::collection($posts);
+    }
     public function selectAllPost(){
         $posts = Posts::with('user', 'comments', 'likes', 'hashtags', 'morePost')->get();
         foreach ($posts as $post) {

@@ -5,8 +5,10 @@ namespace App\Http\Controllers\API;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\StoriesResource;
 use App\Models\Stories;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class StoriesController extends Controller
 {
@@ -20,6 +22,24 @@ class StoriesController extends Controller
         } catch (\Exception $e) {
             return response()->json(['Failure' => 'Could not load']);
         }
+    }
+
+    public function selectSubscriptionStories($userId){
+        try {
+            $user = User::with('subscriptions')->findOrFail($userId);
+            $subscribedUserIds = $user->subscriptions->pluck('owner_id')->toArray();
+            $subscribedUserIds[] = $user->id;
+            $stories = Stories::with('user')
+                ->whereIn('user_id', $subscribedUserIds)
+                ->get();
+            foreach ($stories as $story){
+                $story->load('user');
+            }
+            return response()->json(StoriesResource::collection($stories));
+        } catch (\Exception $e){
+            return response()->json(['Failure' => 'Could not load']);
+        }
+
     }
 
     public function createStory(Request $request){

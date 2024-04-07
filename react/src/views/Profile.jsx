@@ -6,6 +6,7 @@ import UserProfilePost from "../Components/UserProfilePost.jsx";
 import toast, {Toaster} from "react-hot-toast";
 import Post from "../Components/Post.jsx";
 import Story from "../Components/Story.jsx";
+import Slider from "react-slick";
 
 export default function Profile() {
   const [isAvatar, setIsAvatar] = useState(false);
@@ -237,12 +238,31 @@ export default function Profile() {
     }
   };
 
-  const handleStoryClick = (story) => {
+  const handleStoryClick = (story, index) => {
     setSelectedStory(story);
+    setCurrentStoryIndex(index);
   };
+
 
   const postUser = postsData.filter(post => post.user.id === user.id);
   const filteredStories = storyData.filter(story => story.user.id === user.id);
+
+  const settings = {
+    infinite: true,
+    speed: 500,
+    slidesToShow: 4,
+    slidesToScroll: 1
+  }
+
+  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
+
+  const handleStoryChange = (step) => {
+    const nextIndex = currentStoryIndex + step;
+    if (nextIndex >= 0 && nextIndex < filteredStories.length) {
+      setSelectedStory(filteredStories[nextIndex]);
+      setCurrentStoryIndex(nextIndex);
+    }
+  };
 
   return (
     <section className="flex flex-col mt-16">
@@ -261,26 +281,70 @@ export default function Profile() {
             <button className="bg-gray-300 py-9 px-[52px] rounded-full text-white font-bold text-4xl font-roboto" onClick={() => setIsCreateStory(true)}>
               +
             </button>
-            {filteredStories.map(story => (
-              <div className="relative cursor-pointer">
-                <Story key={story.id} story={story} onClick={() => handleStoryClick(story)} />
-                <button className="absolute top-0 left-0 w-full h-full  " onClick={()=> setSelectedStory(story)}></button>
-              </div>
-            ))}
+            <div className="flex flex-col w-[700px] ml-2">
+              <Slider {...settings}>
+                {filteredStories.map((story,index) => (
+                  <div className="relative cursor-pointer">
+                    <Story key={story.id} story={story} onClick={() => handleStoryClick(story,index)} />
+                    <button className="absolute top-0 left-0 w-full h-full  " onClick={()=> handleStoryClick(story,index)}></button>
+                  </div>
+                ))}
+              </Slider>
+            </div>
             {selectedStory && (
               <div className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center" onClick={(e) => {
                 if (e.target === e.currentTarget) {
                   setSelectedStory(null);
                 }
               }}>
-                <div className="max-w-md mx-auto bg-white p-6 rounded-lg">
-                  <h2 className="text-xl font-bold mb-4">{selectedStory.description}</h2>
+                <div className="max-w-2xl mx-auto bg-white  rounded">
+
                   {selectedStory.image_path && (
-                    <img src={selectedStory.image_path} alt="Story" className="w-full mb-4" />
+                    <img src={selectedStory.image_path} alt="Story" className="object-cover h-[691px] w-[770px] mb-4"/>
                   )}
                   {selectedStory.video_path && (
-                    <video controls src={selectedStory.video_path} className="w-full mb-4"></video>
+                    <video controls src={selectedStory.video_path}
+                           className="object-cover h-[691px] w-[770px] mb-4"></video>
                   )}
+                  <h2 className="text-xl font-bold mb-4 ml-4">Описание: {selectedStory.description}</h2>
+                  <button
+                    className="absolute top-[50%] left-[30%] w-12  bg-gray-400 flex justify-center p-2 rounded-full ml-2 opacity-50"
+                    onClick={() => handleStoryChange(-1)}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    className="absolute top-[50%] right-[30%] w-12  bg-gray-400 flex justify-center p-2 rounded-full mr-2 opacity-50"
+                    onClick={() => handleStoryChange(1)}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-6 w-6 text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
                 </div>
               </div>
             )}
@@ -289,7 +353,7 @@ export default function Profile() {
           {isModal && (
             <div className="fixed inset-0 overflow-y-auto flex items-center justify-center z-50">
               <div className="fixed inset-0 transition-opacity">
-                <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={(e) => {
+              <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={(e) => {
                   if (e.target === e.currentTarget) {
                     setIsModal(false);
                   }
@@ -402,18 +466,43 @@ export default function Profile() {
           <p className="font-semibold font-roboto text-2xl">Пол: {user.gender == 'female' ? 'Женский' : 'Мужской'}</p>
         </div>
         {isCreateStory && (
-          <div className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center">
-            <div className="max-w-md mx-auto bg-white p-6 rounded-lg">
+          <div className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center" onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsCreateStory(false);
+            }
+          }}>
+            <div className="max-w-lg mx-auto bg-white p-6 rounded-lg">
               <h2 className="text-xl font-bold mb-4">Создать историю</h2>
-              <input type="file" accept="image/*" onChange={(e) => setStoryImage(e.target.files[0])} />
-              <input type="file" accept="video/*" onChange={(e) => setStoryVideo(e.target.files[0])} />
-              <textarea value={storyDescription} onChange={(e) => setStoryDescription(e.target.value)} rows="4" placeholder="Описание истории" className="w-full mt-4 p-2 border border-gray-300 rounded" />
-              <button onClick={handleStorySubmit} className="bg-blue-500 text-white py-2 px-4 rounded mt-4">Создать</button>
-              <button onClick={() => setIsCreateStory(false)} className="bg-gray-300 text-black py-2 px-4 rounded mt-4 ml-2">Отмена</button>
+              <label htmlFor="storyImage" className="block mb-2 font-semibold">
+                Изображение:
+                <div className="mt-1 flex justify-between items-center">
+                  <span className="mr-2">{storyImage ? storyImage.name : 'Выберите файл'}</span>
+                  <label htmlFor="storyImage" className="bg-blue-500 text-white py-2 px-4 rounded cursor-pointer hover:bg-blue-600">
+                    Выбрать
+                  </label>
+                  <input type="file" accept="image/*" id="storyImage" onChange={(e) => setStoryImage(e.target.files[0])} className="hidden" />
+                </div>
+              </label>
+              <label htmlFor="storyVideo" className="block mb-2 font-semibold">
+                Видео:
+                <div className="mt-1 flex justify-between items-center">
+                  <span className="mr-2">{storyVideo ? storyVideo.name : 'Выберите файл'}</span>
+                  <label htmlFor="storyVideo" className="bg-blue-500 text-white py-2 px-4 rounded cursor-pointer hover:bg-blue-600">
+                    Выбрать
+                  </label>
+                  <input type="file" accept="video/*" id="storyVideo" onChange={(e) => setStoryVideo(e.target.files[0])} className="hidden" />
+                </div>
+              </label>
+              <label htmlFor="storyDescription" className="block mb-2 font-semibold">
+                Описание:
+                <textarea value={storyDescription} onChange={(e) => setStoryDescription(e.target.value)} rows="4" placeholder="Описание истории" className="w-full mt-1 p-2 border border-gray-300 rounded focus:outline-none focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"></textarea>
+              </label>
+              <div className="flex justify-end mt-4">
+                <button onClick={handleStorySubmit} className="bg-blue-500 text-white py-2 px-4 rounded mr-2 hover:bg-blue-600 focus:outline-none focus:ring focus:ring-indigo-200 focus:ring-opacity-50">Создать</button>
+              </div>
             </div>
           </div>
         )}
-
       </article>
       <article className="border-b mt-5 mb-5"></article>
       <article className="flex justify-between ">

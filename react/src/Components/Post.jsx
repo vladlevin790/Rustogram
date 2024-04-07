@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
 import Burger from "./Burger.jsx";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -22,7 +22,6 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
   const [postEdit, setPostEdit] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
-  const [commentsPost,setCommentsPost] = useState([]);
   const sliderRef = useRef(null);
   const urlName = `${post.user.id}`
 
@@ -31,10 +30,10 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
     like => like?.post?.id === post.id && like?.user?.id === user?.id
   );
 
-  const filterComments = () => {
-    const filtered = comments.filter(comment => comment.post_id === post.id);
-    setCommentsPost(filtered);
-  };
+  const commentsPost = useMemo(() => {
+    return comments.filter(comment => comment.post_id === post.id);
+  }, [comments, post.id]);
+
   const handleEditSubmit = async (e) => {
       e.preventDefault();
       try {
@@ -103,10 +102,6 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
     slidesToShow: 1,
     slidesToScroll: 1
   };
-
-  useEffect(()=>{
-    filterComments();
-  },[commentsPost])
 
   return (
     <article className="flex static flex-col w-[770px]  bg-[#F9F8F8] border border-gray-300 rounded-md shadow-md mb-4 relative">
