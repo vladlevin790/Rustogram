@@ -1,9 +1,10 @@
 <?php
 
-namespace App\Http\Controllers\API;
+namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\StoriesResource;
+use App\Models\Looked_stories;
 use App\Models\Stories;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -42,6 +43,32 @@ class StoriesController extends Controller
 
     }
 
+    public function lookedStory($userId) {
+        try {
+            $user = User::with('lookedStories')->FindOrFail($userId);
+            $lookedStory = $user->lookedStories->pluck('story_id')->toArray();
+            return response()->json([
+                'looked_stories'=>$lookedStory,
+            ]);
+        } catch (\Exception $e){
+            return response()->json(['Success'=>false]);
+        }
+    }
+
+    public function lookStory($userId, $storyId) {
+        try {
+            $user =  User::with('lookedStories')->FindOrFail($userId);
+            $user->lookedStories()->create([
+                'user_id'=>$userId,
+                'story_id'=>$storyId,
+                'is_looked'=>true,
+            ]);
+            return response()->json(['Success'=>true,'status'=>200]);
+        } catch (\Exception $e){
+            return response()->json(['Success'=>false]);
+        }
+    }
+
     public function createStory(Request $request){
         try {
             $user = Auth::user();
@@ -58,7 +85,7 @@ class StoriesController extends Controller
                 $videoPath = $request->file('video_path')->store('public/images');
                 $data['video_path'] = url(\Storage::url($videoPath));
             }
-            $story = $user->stories()->create($data);
+            $user->stories()->create($data);
             return response()->json(['Success'=>true,'status'=>200]);
         } catch (\Exception $e) {
             return response()->json(['Success'=>false]);

@@ -65,4 +65,8 @@ class User extends Authenticatable
     public function subscriptions(){
         return $this->hasMany(Subscriptions::class);
     }
+
+    public function lookedStories() {
+        return $this->hasMany(Looked_stories::class);
+    }
 }

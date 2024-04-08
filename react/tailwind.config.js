@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       borderColor: theme => ({
-        gradient: ["linear-gradient(#AB97EA, #6EB8E2E5, #8ABAD6)"],
+        gradient: "linear-gradient(to right, pink, red)",
       }),
       backgroundColor: theme => ({
         comment: "#F2F2F2",

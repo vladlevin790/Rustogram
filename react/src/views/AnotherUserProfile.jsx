@@ -16,6 +16,8 @@ export default function AnotherUserProfile() {
   const [comments, setComments] = useState([]);
   const [newCommentText, setNewCommentText] = useState('');
   const [userOnlineStatus, setUserOnlineStatus] = useState("");
+  const [subscriptionCount,setSubscriptionCount] =useState([])
+  const [isSubscribed, setIsSubscribed] = useState(false);
   const location = useLocation();
   const { userId } = useParams();
   const {user} = useStateContext();
@@ -23,9 +25,8 @@ export default function AnotherUserProfile() {
   useEffect(() => {
     fetchDataUser();
     fetchPostData();
-    console.log(userId)
+    fetchCountOfSubscriptions();
   }, []);
-
   const fetchDataUser = async () => {
     try {
       const { data } = await axiosClient.get(`/user_profile/another_user/${userId}`,{userId: userId});
@@ -36,6 +37,15 @@ export default function AnotherUserProfile() {
       console.error("Error fetching user data:", error);
     }
   };
+
+  const fetchCountOfSubscriptions = async () => {
+    try {
+      const {data} = await axiosClient.get(`/subscription_info/${userId}`);
+      setSubscriptionCount(data);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  }
 
   const fetchPostData = async () => {
     try {
@@ -130,6 +140,14 @@ export default function AnotherUserProfile() {
     return formattedTimeString;
   };
 
+  const handleSubscribeClick =  () => {
+    try {
+      const {data} =  axiosClient.post(`/subscribe_user/${user.id}/${userId}`);
+    } catch (e) {
+      console.log('Eroror')
+    }
+  }
+
   const handlePostClick = (post) => {
     setSelectedPost(post);
   };
@@ -191,6 +209,8 @@ export default function AnotherUserProfile() {
     }
   };
 
+  console.log(subscriptionCount)
+
   return (
     <section className="flex flex-col mt-16">
       {userData && (
@@ -205,7 +225,22 @@ export default function AnotherUserProfile() {
               )}
             </div>
             <div className="flex flex-col ml-9 mt-5">
-              <h2 className="font-bold font-roboto text-4xl mb-2">{userData.name}</h2>
+              <div className="flex items-center gap-4 mt-2 mb-2">
+                <h2 className="font-bold font-roboto text-4xl mb-2">{userData.name}</h2>
+                {!isSubscribed && (
+                  <button
+                    className="bg-indigo-500 text-white py-2 px-4 rounded hover:bg-indigo-600 focus:outline-none focus:ring focus:ring-indigo-200 focus:ring-opacity-50 font-roboto font-weight-bolder text-xl"
+                    onClick={handleSubscribeClick}>Подписаться
+                  </button>
+                )}
+                {isSubscribed && (
+                  <button
+                    className="bg-gray-400 text-white py-2 px-4 rounded hover:bg-indigo-600 focus:outline-none focus:ring focus:ring-indigo-200 focus:ring-opacity-50 font-roboto font-weight-bolder text-xl"
+                    onClick={handleSubscribeClick}>Отписаться
+                  </button>
+                )}
+              </div>
+              <p className="font-semibold font-roboto text-3xl">Подписчиков: {subscriptionCount.subscriptions_count}</p>
               {userOnlineStatus && (
                 <>
                   {userOnlineStatus === "Онлайн" ?
@@ -219,8 +254,14 @@ export default function AnotherUserProfile() {
               )}
               {isBio && <p className="font-semibold font-roboto text-2xl">{userData.bio}</p>}
               {!isBio && <p className="font-roboto font-semibold text-2xl">Информация отсутствует</p>}
-              <p className="font-semibold font-roboto text-2xl">Дата рождения: {new Date(userData.birthday).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-              <p className="font-semibold font-roboto text-2xl">Пол: {userData.gender === 'female' ? 'Женский' : 'Мужской'}</p>
+              <p className="font-semibold font-roboto text-2xl">Дата
+                рождения: {new Date(userData.birthday).toLocaleDateString('ru-RU', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}</p>
+              <p
+                className="font-semibold font-roboto text-2xl">Пол: {userData.gender === 'female' ? 'Женский' : 'Мужской'}</p>
             </div>
           </article>
           <article className="border-b mt-5 mb-5"></article>
@@ -228,7 +269,7 @@ export default function AnotherUserProfile() {
             <div className="flex flex-wrap gap-20 mt-10 ml-10">
               {postsData.map(post => (
                 <div key={post.id} onClick={() => handlePostClick(post)}>
-                  <UserProfilePost post={post} />
+                  <UserProfilePost post={post}/>
                 </div>
               ))}
             </div>
