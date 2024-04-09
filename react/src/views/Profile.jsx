@@ -32,6 +32,7 @@ export default function Profile() {
   const [storyVideo, setStoryVideo] = useState(null);
   const [storyDescription, setStoryDescription] = useState('');
   const [selectedStory, setSelectedStory] = useState(null);
+  const [subscriptionData, setSubscriptionData] = useState({});
 
 
   const fetchData = async () => {
@@ -40,6 +41,7 @@ export default function Profile() {
         axiosClient.get('/posts'),
         axiosClient.get('/getLikes'),
       ]);
+      const {dataSubscr} = await axiosClient.get(`/subscription_info/${user.id}`);
       const posts = postsResponse.data.map(post => ({
         ...post,
         isLiked: false
@@ -47,6 +49,7 @@ export default function Profile() {
       const likes = likesResponse.data.likes;
       setPostsData(posts);
       setLikesData(likes);
+      setSubscriptionData(dataSubscr);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -264,6 +267,19 @@ export default function Profile() {
     }
   };
 
+  const fetchCountOfSubscriptions = async () => {
+    try {
+      const { data } = await axiosClient.get(`/subscription_info/${user.id}`);
+      setSubscriptionData(data);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
+
+  useEffect(() => {
+      fetchCountOfSubscriptions();
+  }, [user]);
+
   return (
     <section className="flex flex-col mt-16">
       <article className="flex ml-60">
@@ -277,7 +293,7 @@ export default function Profile() {
             setIsModal(!isModal)
           }}><Burger className="w-6 mt-2"/>Редактировать
           </button>
-          <div className="flex gap-4 mt-6 w-[1000px]">
+          <div className="flex gap-4 mt-16 w-[1000px]">
             <button className="bg-gray-300 py-9 px-[52px] rounded-full text-white font-bold text-4xl font-roboto" onClick={() => setIsCreateStory(true)}>
               +
             </button>
@@ -348,7 +364,6 @@ export default function Profile() {
                 </div>
               </div>
             )}
-
           </div>
           {isModal && (
             <div className="fixed inset-0 overflow-y-auto flex items-center justify-center z-50">
@@ -452,6 +467,7 @@ export default function Profile() {
         </div>
         <div className="flex flex-col ml-9 mt-5">
           <h2 className="font-bold font-roboto text-4xl mb-2">{user.name}</h2>
+          <p className="font-semibold font-roboto text-3xl">Подписчиков: {subscriptionData ? subscriptionData.subscriptions_count || 0 : 0}</p>
           {userOnlineStatus && (<>
             {userOnlineStatus == "Онлайн" ?
               <div className="flex align-content-center items-center gap-1">
@@ -462,7 +478,12 @@ export default function Profile() {
           </>)}
           {isBio && (<p className="font-semibold font-roboto text-2xl">{user.bio}</p>)}
           {!isBio && (<p className="font-roboto font-semibold text-2xl">Информация отсутствует</p>)}
-          <p className="font-semibold font-roboto text-2xl">Дата рождения: {new Date(user.birthday).toLocaleDateString('ru-RU',{year: 'numeric', month: 'long', day: 'numeric'})}</p>
+          <p className="font-semibold font-roboto text-2xl">Дата
+            рождения: {new Date(user.birthday).toLocaleDateString('ru-RU', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            })}</p>
           <p className="font-semibold font-roboto text-2xl">Пол: {user.gender == 'female' ? 'Женский' : 'Мужской'}</p>
         </div>
         {isCreateStory && (

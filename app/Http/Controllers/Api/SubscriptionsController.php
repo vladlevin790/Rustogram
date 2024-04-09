@@ -25,13 +25,22 @@ class SubscriptionsController extends Controller
 
     public function subscriptionInfo($userId){
         try {
-            $user = User::FindOrFail($userId);
-            $subscriptionUser = Subscriptions::where('owner_id',$user->id)->get('user_id');
-            $subscriptionsCount = Subscriptions::where('owner_id',$user->id)->count();
-            Log::info('Subscriptions count',['wdqwdq'=>$subscriptionUser]);
-            return response()->json(['Success'=>true, 'subscriptions_count' => $subscriptionsCount, 'user_id'=>$subscriptionUser ,'status'=>200]);
+            $user = User::findOrFail($userId);
+            $subscriptions = Subscriptions::where('owner_id', $user->id)->get();
+            $subscriptionsCount = $subscriptions->count();
+            $subscriptionIds = $subscriptions->pluck('id');
+            $userIds = $subscriptions->pluck('user_id');
+
+            return response()->json([
+                'Success' => true,
+                'subscriptions' => $subscriptions,
+                'subscriptions_count' => $subscriptionsCount,
+                'subscription_ids' => $subscriptionIds,
+                'user_ids' => $userIds,
+                'status' => 200
+            ]);
         } catch (\Exception $e) {
-            return response()->json(['Success'=>false]);
+            return response()->json(['Success' => false]);
         }
     }
 
@@ -47,13 +56,32 @@ class SubscriptionsController extends Controller
         }
     }
 
-    public function unSubscribe($subscribeId) {
+    public function unSubscribe($userId, $subscrId) {
         try {
-            $subscription = Subscriptions::FindOrFail($subscribeId);
-            $subscription->delete();
-            return response()->json(['Success'=>true, 'status'=>200]);
+            $user = User::findOrFail($userId);
+            $subscription = Subscriptions::findOrFail($subscrId);
+            if ($subscription->user_id === $user->id) {
+                $subscription->delete();
+                return response()->json(['Success' => true, 'status' => 200]);
+            } else {
+                return response()->json(['Success' => false, 'message' => 'У пользователя нет такой подписки']);
+            }
         } catch (\Exception $e) {
-            return response()->json(['Success'=>false]);
+            return response()->json(['Success' => false, 'message' => $e->getMessage()]);
         }
     }
+
+    public function selectUsersFromSubscription($userId) {
+        try {
+            $user = User::findOrFail($userId);
+            $subscribedUsers = User::whereHas('subscriptions', function($query) use ($userId) {
+                $query->where('owner_id', $userId);
+            })->get(['id', 'name']);
+            return response()->json(['Success' => true, 'subscribed_users' => $subscribedUsers, 'status' => 200]);
+        } catch (\Exception $e) {
+            return response()->json(['Success' => false]);
+        }
+    }
+
+
 }

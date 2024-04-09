@@ -3,8 +3,8 @@ import axiosClient from "../axios-client.js";
 import UserProfilePost from "../Components/UserProfilePost.jsx";
 import Post from "../Components/Post.jsx";
 import toast, { Toaster } from "react-hot-toast";
-import {useLocation, useParams} from "react-router-dom";
-import {useStateContext} from "../context/ContextProvider.jsx";
+import { useParams } from "react-router-dom";
+import { useStateContext } from "../context/ContextProvider.jsx";
 
 export default function AnotherUserProfile() {
   const [userData, setUserData] = useState(null);
@@ -16,20 +16,21 @@ export default function AnotherUserProfile() {
   const [comments, setComments] = useState([]);
   const [newCommentText, setNewCommentText] = useState('');
   const [userOnlineStatus, setUserOnlineStatus] = useState("");
-  const [subscriptionCount,setSubscriptionCount] =useState([])
+  const [subscriptionData, setSubscriptionData] = useState({});
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const location = useLocation();
   const { userId } = useParams();
-  const {user} = useStateContext();
+  const { user } = useStateContext();
+  const isOwner = userId == user.id;
 
   useEffect(() => {
     fetchDataUser();
     fetchPostData();
     fetchCountOfSubscriptions();
-  }, []);
+  }, [user]);
+
   const fetchDataUser = async () => {
     try {
-      const { data } = await axiosClient.get(`/user_profile/another_user/${userId}`,{userId: userId});
+      const { data } = await axiosClient.get(`/user_profile/another_user/${userId}`);
       setUserData(data);
       setIsAvatar(data.avatar !== null);
       setIsBio(data.bio !== null);
@@ -40,12 +41,15 @@ export default function AnotherUserProfile() {
 
   const fetchCountOfSubscriptions = async () => {
     try {
-      const {data} = await axiosClient.get(`/subscription_info/${userId}`);
-      setSubscriptionCount(data);
+      const { data } = await axiosClient.get(`/subscription_info/${userId}`);
+      setSubscriptionData(data);
+      const isUserSubscribed = data.user_ids.includes(user.id);
+      setIsSubscribed(isUserSubscribed);
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
-  }
+  };
+
 
   const fetchPostData = async () => {
     try {
@@ -57,7 +61,6 @@ export default function AnotherUserProfile() {
         ...post,
         isLiked: false
       }));
-      console.log(posts)
       const likes = likesResponse.data.likes;
       setPostsData(posts);
       setLikesData(likes);
@@ -67,7 +70,7 @@ export default function AnotherUserProfile() {
     } catch (error) {
       console.error("Error fetching user data:", error);
     }
-  }
+  };
 
   async function fetchDataComments(postId) {
     try {
@@ -85,14 +88,12 @@ export default function AnotherUserProfile() {
     }
   }, [userData]);
 
-
   const gmtToMoscowTime = (gmtTime) => {
     const moscowOffset = 3;
     const gmtDate = new Date(gmtTime);
     const moscowTime = new Date(gmtDate.getTime() + moscowOffset * 3600000);
     return moscowTime;
   };
-
 
   const getHoursSuffix = (hours) => {
     if (hours === 1) {
@@ -113,7 +114,6 @@ export default function AnotherUserProfile() {
     }
     return '';
   };
-
 
   const formatLastOnline = (lastOnline) => {
     if (!lastOnline) return '';
@@ -140,24 +140,52 @@ export default function AnotherUserProfile() {
     return formattedTimeString;
   };
 
-  const handleSubscribeClick =  () => {
+  const handleSubscribeClick = async () => {
     try {
-      const {data} =  axiosClient.post(`/subscribe_user/${user.id}/${userId}`);
-    } catch (e) {
-      console.log('Eroror')
+      await axiosClient.post(`/subscribe_user/${user.id}/${userId}`);
+      setIsSubscribed(true);
+      const {data} = await axiosClient.get(`/subscription_info/${userId}`);
+      setSubscriptionData(data);
+      toast.success("Вы успешно подписались");
+    } catch (error) {
+      console.error("Error subscribing:", error);
+      toast.error("Ошибка при подписке");
     }
-  }
+  };
+
+  const handleUnSubscribeClick = async () => {
+    try {
+      const subscriptions = subscriptionData.subscriptions;
+      const targetSubscription = subscriptions.find(subscription => subscription.user_id === user.id);
+      if (targetSubscription) {
+        try {
+          const subscriptionId = targetSubscription.id;
+          const response = await axiosClient.delete(`/delete_subscription/${user.id}/${subscriptionId}`);
+
+          if (response.data.Success) {
+            setIsSubscribed(false);
+            const {data} = await axiosClient.get(`/subscription_info/${userId}`);
+            setSubscriptionData(data);
+            toast.success("Вы успешно отписались");
+          } else {
+            toast.error("Ошибка при отписке");
+          }
+        } catch (error) {
+          toast.error("Произошла ошибка при отписке");
+        }
+      } else {
+        toast.error("Подписка не найдена");
+      }
+    } catch (error) {
+      toast.error("Произошла ошибка при отписке");
+    }
+  };
 
   const handlePostClick = (post) => {
     setSelectedPost(post);
   };
 
-  const filterComments = (postId) => {
-    const filtered = comments.filter(comment => comment.post_id === postId);
-    setComments(filtered);
-  };
-
-  const handleCommentSubmit = async (postId,postUserId) => {
+  const handleCommentSubmit = async (postId, postUserId) => {
     try {
       const response = await axiosClient.post(`/posts/${postId}/comments`, {
         user_id: postUserId,
@@ -199,17 +227,16 @@ export default function AnotherUserProfile() {
         setLikesData(prevLikesData => {
           return hasLiked
             ? prevLikesData.filter(like => !(like.post && like.post.id === postId))
-            : [...prevLikesData, {id: postId, user: user, post: {id: postId}}];
+            : [...prevLikesData, { id: postId, user: user, post: { id: postId } }];
         });
       } else {
-        toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
+        toast.error("Что-то пошло не так");
       }
     } catch (error) {
-      toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
+      console.error("Error liking post:", error);
+      toast.error("Что-то пошло не так");
     }
   };
-
-  console.log(subscriptionCount)
 
   return (
     <section className="flex flex-col mt-16">
@@ -225,22 +252,24 @@ export default function AnotherUserProfile() {
               )}
             </div>
             <div className="flex flex-col ml-9 mt-5">
-              <div className="flex items-center gap-4 mt-2 mb-2">
+              <div className="flex items-center gap-10 mt-2 mb-2">
                 <h2 className="font-bold font-roboto text-4xl mb-2">{userData.name}</h2>
-                {!isSubscribed && (
-                  <button
-                    className="bg-indigo-500 text-white py-2 px-4 rounded hover:bg-indigo-600 focus:outline-none focus:ring focus:ring-indigo-200 focus:ring-opacity-50 font-roboto font-weight-bolder text-xl"
-                    onClick={handleSubscribeClick}>Подписаться
-                  </button>
-                )}
-                {isSubscribed && (
-                  <button
-                    className="bg-gray-400 text-white py-2 px-4 rounded hover:bg-indigo-600 focus:outline-none focus:ring focus:ring-indigo-200 focus:ring-opacity-50 font-roboto font-weight-bolder text-xl"
-                    onClick={handleSubscribeClick}>Отписаться
-                  </button>
-                )}
+                {!isOwner && (<>
+                  {!isSubscribed && (
+                    <button
+                      className="bg-indigo-500 text-white py-2 px-4 rounded hover:bg-indigo-600 focus:outline-none focus:ring focus:ring-indigo-200 focus:ring-opacity-50 font-roboto font-weight-bolder text-xl"
+                      onClick={handleSubscribeClick}>Подписаться
+                    </button>
+                  )}
+                  {isSubscribed && (
+                    <button
+                      className="bg-gray-400 text-white py-2 px-4 rounded hover:bg-indigo-600 focus:outline-none focus:ring focus:ring-indigo-200 focus:ring-opacity-50 font-roboto font-weight-bolder text-xl"
+                      onClick={handleUnSubscribeClick}>Отписаться
+                    </button>
+                  )}
+                </>)}
               </div>
-              <p className="font-semibold font-roboto text-3xl">Подписчиков: {subscriptionCount.subscriptions_count}</p>
+              <p className="font-semibold font-roboto text-3xl">Подписчиков: {subscriptionData.subscriptions_count}</p>
               {userOnlineStatus && (
                 <>
                   {userOnlineStatus === "Онлайн" ?
@@ -275,19 +304,21 @@ export default function AnotherUserProfile() {
             </div>
           </article>
           {selectedPost && (
-            <div className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center"     onClick={(e) => {
+            <div className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center" onClick={(e) => {
               if (e.target === e.currentTarget) {
                 setSelectedPost(null);
               }
-            }}>>
+            }}>
               <div className="max-w-screen-lg mx-auto mt-6 max-h-screen overflow-y-auto">
-                <Post post={selectedPost} onLikeClick={handleLikeClick} likesData={likesData} user={user} comments={comments} handleCommentSubmit={handleCommentSubmit} setNewCommentText={setNewCommentText} newCommentText={newCommentText} />
+                <Post post={selectedPost} onLikeClick={handleLikeClick} likesData={likesData} user={user}
+                      comments={comments} handleCommentSubmit={handleCommentSubmit} setNewCommentText={setNewCommentText}
+                      newCommentText={newCommentText}/>
               </div>
             </div>
           )}
         </>
       )}
-      <Toaster />
+      <Toaster/>
     </section>
   );
 }

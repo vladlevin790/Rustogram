@@ -18,7 +18,6 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/signup/finish', [UserSignUpUpdateController::class, 'insertSignUpUserInfo']);
     require __DIR__ . '/posts_routes.php';
@@ -32,6 +31,7 @@ Route::middleware('auth:sanctum')->group(function () {
     });
     Route::apiResource('/hashtags', HashtagController::class)->except(['index']);
 });
+
 Route::get('/user_profile/another_user/{userid}',[UserController::class,'getAnotherUser']);
 Route::get('/posts/another_user/{userId}', [PostsController::class, 'getAnotherUserPost']);
 Route::post('/signup', [AuthController::class, 'signup']);

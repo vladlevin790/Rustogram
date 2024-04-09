@@ -212,4 +212,14 @@ return [
         // 'ExampleClass' => Dashboard\Example\ExampleClass::class,
     ])->toArray(),
 
+
+    'api_requests_per_minute' => 20000,
+
+    'rate_limit' => [
+        'enabled' => true,
+        'limit' => 200000, // Количество запросов
+        'reset_period' => 60, // Период сброса в секундах
+    ],
+
+
 ];
