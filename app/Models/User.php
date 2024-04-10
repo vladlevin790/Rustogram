@@ -69,4 +69,12 @@ class User extends Authenticatable
     public function lookedStories() {
         return $this->hasMany(Looked_stories::class);
     }
+
+    public function messagesChat() {
+        return $this->hasMany(Messages::class);
+    }
+
+    public function userChats(){
+        return $this->hasMany(Users_chats::class);
+    }
 }

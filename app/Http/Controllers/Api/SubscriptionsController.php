@@ -47,7 +47,7 @@ class SubscriptionsController extends Controller
 
     public function getSubscribedUsers($userId) {
         try {
-            $user = User::with('subscriptions')->findOrFail($userId);
+            $user = User::with('subscriptions')->FindOrFail($userId);
             $subscribedUserIds = $user->subscriptions->pluck('user_id');
             $subscribedUsers = User::whereIn('id', $subscribedUserIds)->get(['id', 'name']);
             return response()->json(['Success'=>true, 'subscribed_users' => $subscribedUsers, 'status'=>200]);
@@ -58,8 +58,8 @@ class SubscriptionsController extends Controller
 
     public function unSubscribe($userId, $subscrId) {
         try {
-            $user = User::findOrFail($userId);
-            $subscription = Subscriptions::findOrFail($subscrId);
+            $user = User::FindOrFail($userId);
+            $subscription = Subscriptions::FindOrFail($subscrId);
             if ($subscription->user_id === $user->id) {
                 $subscription->delete();
                 return response()->json(['Success' => true, 'status' => 200]);
@@ -76,7 +76,7 @@ class SubscriptionsController extends Controller
             $user = User::findOrFail($userId);
             $subscribedUsers = User::whereHas('subscriptions', function($query) use ($userId) {
                 $query->where('owner_id', $userId);
-            })->get(['id', 'name']);
+            })->get(['id', 'name', 'avatar']);
             return response()->json(['Success' => true, 'subscribed_users' => $subscribedUsers, 'status' => 200]);
         } catch (\Exception $e) {
             return response()->json(['Success' => false]);

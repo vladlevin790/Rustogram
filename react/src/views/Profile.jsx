@@ -7,6 +7,7 @@ import toast, {Toaster} from "react-hot-toast";
 import Post from "../Components/Post.jsx";
 import Story from "../Components/Story.jsx";
 import Slider from "react-slick";
+import {Link} from "react-router-dom";
 
 export default function Profile() {
   const [isAvatar, setIsAvatar] = useState(false);
@@ -33,7 +34,8 @@ export default function Profile() {
   const [storyDescription, setStoryDescription] = useState('');
   const [selectedStory, setSelectedStory] = useState(null);
   const [subscriptionData, setSubscriptionData] = useState({});
-
+  const [followersModalOpen, setFollowersModalOpen] = useState(false);
+  const [followers, setFollowers] = useState([]);
 
   const fetchData = async () => {
     try {
@@ -276,9 +278,28 @@ export default function Profile() {
     }
   };
 
+  const openFollowersModal = () => {
+    setFollowersModalOpen(true);
+  };
+
+  const fetchFollowers = async () => {
+    try {
+      const response = await axiosClient.get(`/get_subscribed_users/${user.id}`);
+      setFollowers(response.data.subscribed_users);
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+    }
+  };
+
   useEffect(() => {
       fetchCountOfSubscriptions();
   }, [user]);
+
+  useEffect(() => {
+    if (followersModalOpen) {
+      fetchFollowers();
+    }
+  }, [followersModalOpen]);
 
   return (
     <section className="flex flex-col mt-16">
@@ -467,7 +488,30 @@ export default function Profile() {
         </div>
         <div className="flex flex-col ml-9 mt-5">
           <h2 className="font-bold font-roboto text-4xl mb-2">{user.name}</h2>
-          <p className="font-semibold font-roboto text-3xl">Подписчиков: {subscriptionData ? subscriptionData.subscriptions_count || 0 : 0}</p>
+          <p className="font-semibold font-roboto text-3xl cursor-pointer" onClick={openFollowersModal}>Подписчиков: {subscriptionData ? subscriptionData.subscriptions_count || 0 : 0}</p>
+          {followersModalOpen && (
+            <div className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center" onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setFollowersModalOpen(false);
+              }
+            }}>
+              <div className="max-w-lg mx-auto bg-white p-6 rounded-lg">
+                <h2 className="text-2xl font-bold font-roboto mb-4">Подписчики :</h2>
+                <div className="flex flex-col gap-4">
+                  {followers.map(follower => (
+                    <Link to={`/user_profile/${follower.id}`}><div key={follower.id} className="flex gap-10 items-center mb-2 bg-gray-200 w-[450px] p-4 rounded-xl">
+                      {follower.avatar ? (
+                        <img className="w-[50px] h-[50px] rounded-full" src={follower.avatar} alt=""/>
+                      ) : (
+                        <img src="../../src/media/icons/user.svg" className="h-[39px] w-[37px]"/>
+                      )}
+                      <p className="font-semibold font-roboto text-2xl">{follower.name}</p>
+                    </div></Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
           {userOnlineStatus && (<>
             {userOnlineStatus == "Онлайн" ?
               <div className="flex align-content-center items-center gap-1">

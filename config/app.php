@@ -217,8 +217,8 @@ return [
 
     'rate_limit' => [
         'enabled' => true,
-        'limit' => 200000, // Количество запросов
-        'reset_period' => 60, // Период сброса в секундах
+        'limit' => 200000,
+        'reset_period' => 60,
     ],
 
 

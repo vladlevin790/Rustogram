@@ -25,15 +25,16 @@ Route::middleware('auth:sanctum')->group(function () {
     require __DIR__ . '/user_profile_routes.php';
     require __DIR__ . '/stories_routes.php';
     require __DIR__ . '/subscribed_routes.php';
+    require __DIR__ . '/messanger_router.php';
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user_main', function (Request $request) {
         return $request->user();
     });
     Route::apiResource('/hashtags', HashtagController::class)->except(['index']);
+    Route::get('/user_profile/another_user/{userid}',[UserController::class,'getAnotherUser']);
+    Route::get('/posts/another_user/{userId}', [PostsController::class, 'getAnotherUserPost']);
 });
 
-Route::get('/user_profile/another_user/{userid}',[UserController::class,'getAnotherUser']);
-Route::get('/posts/another_user/{userId}', [PostsController::class, 'getAnotherUserPost']);
 Route::post('/signup', [AuthController::class, 'signup']);
 Route::post('/login', [AuthController::class, 'login']);
 

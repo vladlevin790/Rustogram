@@ -1,10 +1,11 @@
-import {Link, Navigate, Outlet, } from "react-router-dom";
+import {Link, Navigate, Outlet, useLocation } from "react-router-dom";
 import { useStateContext } from "../context/ContextProvider";
 import axiosClient from "../axios-client.js";
 import { useEffect } from "react";
 
 export default function DefaultLayout() {
   const { user, token, setUser, setToken, notification } = useStateContext();
+  const location = useLocation();
 
   if (!token) {
     return <Navigate to="/login" />;
@@ -29,8 +30,11 @@ export default function DefaultLayout() {
     fetchUser();
   }, []);
 
+  const hideSidebar = location.pathname === "/messages";
+
   return (
     <div className="flex ">
+      {!hideSidebar &&
       <aside className="fixed top-0 flex flex-col gap-[49px] px-[80px] py-10 border-r border-gray-200 h-screen">
 
         <Link to="/" className="font-rustogram font-bold text-[40px] py-2 hover:text-gray">Rustogram</Link>
@@ -75,6 +79,7 @@ export default function DefaultLayout() {
           <a onClick={onLogout} className="font-bold text-[30px] hover:text-gray-500" href="#">Выйти</a>
         </div>
       </aside>
+      }
       <div className="ml-[394px]">
         <main>
           <Outlet user={user}/>

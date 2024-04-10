@@ -3,8 +3,10 @@ import axiosClient from "../axios-client.js";
 import UserProfilePost from "../Components/UserProfilePost.jsx";
 import Post from "../Components/Post.jsx";
 import toast, { Toaster } from "react-hot-toast";
-import { useParams } from "react-router-dom";
+import {Link, useParams} from "react-router-dom";
 import { useStateContext } from "../context/ContextProvider.jsx";
+import Slider from "react-slick";
+import Story from "../Components/Story.jsx";
 
 export default function AnotherUserProfile() {
   const [userData, setUserData] = useState(null);
@@ -21,12 +23,18 @@ export default function AnotherUserProfile() {
   const { userId } = useParams();
   const { user } = useStateContext();
   const isOwner = userId == user.id;
+  const [followersModalOpen, setFollowersModalOpen] = useState(false);
+  const [followers, setFollowers] = useState([]);
+  const [storyData,setStoryData] = useState([]);
+  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
+  const [selectedStory, setSelectedStory] = useState(null);
 
   useEffect(() => {
     fetchDataUser();
     fetchPostData();
     fetchCountOfSubscriptions();
-  }, [user]);
+    fetchDataStories();
+  }, [user,userId]);
 
   const fetchDataUser = async () => {
     try {
@@ -81,6 +89,15 @@ export default function AnotherUserProfile() {
     }
   }
 
+  const fetchDataStories = async () => {
+    try {
+      const response = await axiosClient.get('/stories');
+      setStoryData(response.data);
+    } catch (error) {
+      toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
+    }
+  };
+
   useEffect(() => {
     if (userData) {
       const lastOnlineMoscowTime = gmtToMoscowTime(userData.last_online);
@@ -114,6 +131,15 @@ export default function AnotherUserProfile() {
     }
     return '';
   };
+  const getDaysSuffix = (days) => {
+    if (days === 1) {
+      return 'ь';
+    }
+    if (days >= 2 && days <= 4) {
+      return 'я';
+    }
+    return '';
+  }
 
   const formatLastOnline = (lastOnline) => {
     if (!lastOnline) return '';
@@ -238,16 +264,56 @@ export default function AnotherUserProfile() {
     }
   };
 
+  const openFollowersModal = () => {
+    setFollowersModalOpen(true);
+  };
+
+  const fetchFollowers = async () => {
+    try {
+      const response = await axiosClient.get(`/get_subscribed_users/${userId}`);
+      setFollowers(response.data.subscribed_users);
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+    }
+  };
+
+  const settings = {
+    infinite: true,
+    speed: 500,
+    slidesToShow: 4,
+    slidesToScroll: 1
+  }
+
+  useEffect(() => {
+    if (followersModalOpen) {
+      fetchFollowers();
+    }
+  }, [followersModalOpen]);
+
+  const handleStoryChange = (step) => {
+    const nextIndex = currentStoryIndex + step;
+    if (nextIndex >= 0 && nextIndex < filteredStories.length) {
+      setSelectedStory(filteredStories[nextIndex]);
+      setCurrentStoryIndex(nextIndex);
+    }
+  };
+  const handleStoryClick = (story, index) => {
+    setSelectedStory(story);
+    setCurrentStoryIndex(index);
+  };
+
+  const filteredStories = storyData.filter(story => story.user.id == userId);
+
   return (
     <section className="flex flex-col mt-16">
       {userData && (
         <>
           <article className="flex ml-60">
             <div className=" flex flex-col gap-2 w-[178px]">
-              {isAvatar && <img className="rounded-full w-[130px] h-[130px]" src={userData.avatar} alt="" />}
+              {isAvatar && <img className="rounded-full w-[130px] h-[130px]" src={userData.avatar} alt=""/>}
               {!isAvatar && (
                 <div className="flex items-center justify-center p-4 bg-gray-300 rounded-full w-[130px] h-[130px]">
-                  <img src="../../src/media/icons/user.png" alt="" className="w-[68px]" />
+                  <img src="../../src/media/icons/user.png" alt="" className="w-[68px]"/>
                 </div>
               )}
             </div>
@@ -269,7 +335,36 @@ export default function AnotherUserProfile() {
                   )}
                 </>)}
               </div>
-              <p className="font-semibold font-roboto text-3xl">Подписчиков: {subscriptionData.subscriptions_count}</p>
+              <p className="font-semibold font-roboto text-3xl cursor-pointer"
+                 onClick={openFollowersModal}>Подписчиков: {subscriptionData ? subscriptionData.subscriptions_count || 0 : 0}</p>
+              {followersModalOpen && (
+                <div
+                  className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center z-10"
+                  onClick={(e) => {
+                    if (e.target === e.currentTarget) {
+                      setFollowersModalOpen(false);
+                    }
+                  }}>
+                  <div className="max-w-lg mx-auto bg-white p-6 rounded-lg">
+                    <h2 className="text-2xl font-bold font-roboto mb-4">Подписчики :</h2>
+                    <div className="flex flex-col gap-4">
+                      {followers.map(follower => (
+                        <Link to={`/user_profile/${follower.id}`}>
+                          <div key={follower.id}
+                               className="flex gap-10 items-center mb-2 bg-gray-200 w-[450px] p-4 rounded-xl">
+                            {follower.avatar ? (
+                              <img className="w-[50px] h-[50px] rounded-full" src={follower.avatar} alt=""/>
+                            ) : (
+                              <img src="../../src/media/icons/user.svg" className="h-[39px] w-[37px]"/>
+                            )}
+                            <p className="font-semibold font-roboto text-2xl">{follower.name}</p>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
               {userOnlineStatus && (
                 <>
                   {userOnlineStatus === "Онлайн" ?
@@ -293,7 +388,79 @@ export default function AnotherUserProfile() {
                 className="font-semibold font-roboto text-2xl">Пол: {userData.gender === 'female' ? 'Женский' : 'Мужской'}</p>
             </div>
           </article>
-          <article className="border-b mt-5 mb-5"></article>
+          <article className="flex justify-center items-center  w-[1000px] border-b ml-20 mt-5 mb-5">
+            <div className="flex flex-col w-[700px] ml-2">
+              <Slider {...settings}>
+                {filteredStories.map((story, index) => (
+                  <div className="relative cursor-pointer">
+                    <Story key={story.id} story={story} onClick={() => handleStoryClick(story, index)}/>
+                    <button className="absolute top-0 left-0 w-full h-full  "
+                            onClick={() => handleStoryClick(story, index)}></button>
+                  </div>
+                ))}
+              </Slider>
+              {selectedStory && (
+                <div
+                  className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center"
+                  onClick={(e) => {
+                    if (e.target === e.currentTarget) {
+                      setSelectedStory(null);
+                    }
+                  }}>
+                  <div className="max-w-2xl mx-auto bg-white  rounded">
+
+                    {selectedStory.image_path && (
+                      <img src={selectedStory.image_path} alt="Story"
+                           className="object-cover h-[691px] w-[770px] mb-4"/>
+                    )}
+                    {selectedStory.video_path && (
+                      <video controls src={selectedStory.video_path}
+                             className="object-cover h-[691px] w-[770px] mb-4"></video>
+                    )}
+                    <h2 className="text-xl font-bold mb-4 ml-4">Описание: {selectedStory.description}</h2>
+                    <button
+                      className="absolute top-[50%] left-[30%] w-12  bg-gray-400 flex justify-center p-2 rounded-full ml-2 opacity-50"
+                      onClick={() => handleStoryChange(-1)}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                    </button>
+                    <button
+                      className="absolute top-[50%] right-[30%] w-12  bg-gray-400 flex justify-center p-2 rounded-full mr-2 opacity-50"
+                      onClick={() => handleStoryChange(1)}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-6 w-6 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 5l7 7-7 7"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </article>
           <article className="flex justify-between ">
             <div className="flex flex-wrap gap-20 mt-10 ml-10">
               {postsData.map(post => (
@@ -304,14 +471,16 @@ export default function AnotherUserProfile() {
             </div>
           </article>
           {selectedPost && (
-            <div className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center" onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                setSelectedPost(null);
-              }
-            }}>
+            <div className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center"
+                 onClick={(e) => {
+                   if (e.target === e.currentTarget) {
+                     setSelectedPost(null);
+                   }
+                 }}>
               <div className="max-w-screen-lg mx-auto mt-6 max-h-screen overflow-y-auto">
                 <Post post={selectedPost} onLikeClick={handleLikeClick} likesData={likesData} user={user}
-                      comments={comments} handleCommentSubmit={handleCommentSubmit} setNewCommentText={setNewCommentText}
+                      comments={comments} handleCommentSubmit={handleCommentSubmit}
+                      setNewCommentText={setNewCommentText}
                       newCommentText={newCommentText}/>
               </div>
             </div>
