@@ -80,11 +80,18 @@ export default function DefaultLayout() {
         </div>
       </aside>
       }
+      {!hideSidebar && (
       <div className="ml-[394px]">
         <main>
           <Outlet user={user}/>
         </main>
       </div>
+      )}
+      {hideSidebar && (
+        <main>
+          <Outlet user={user}/>
+        </main>
+      )}
     </div>
   )
 }

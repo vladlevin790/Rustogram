@@ -42,21 +42,35 @@ class ChatController extends Controller
     public function createChat(Request $request, $userId)
     {
         $user = $request->user();
-        $secondUser = User::findOrFail($userId);
-        if ($secondUser) {
-            $existingChat = $user->chats()->whereHas('users', function ($query) use ($secondUser) {
-                $query->where('user_id', $secondUser->id);
-            })->first();
-            if ($existingChat) {
-                return response()->json(['error' => 'Chat already exists'], 400);
-            }
-            $chat = new Chat();
-            $chat->save();
-            $chat->users()->attach([$user->id, $secondUser->id]);
-            return response()->json($chat);
-        } else {
+        $secondUser = User::FindOrFail($userId);
+
+        if (!$secondUser) {
             return response()->json(['error' => 'User not found'], 404);
         }
+
+        $existingChat = Users_chats::where(function ($query) use ($user, $secondUser) {
+            $query->where('owner_id', $user->id)
+                ->where('user_id', $secondUser->id);
+        })->orWhere(function ($query) use ($user, $secondUser) {
+            $query->where('owner_id', $secondUser->id)
+                ->where('user_id', $user->id);
+        })->first();
+
+        if ($existingChat) {
+            return response()->json(['error' => 'Chat already exists'], 400);
+        }
+
+        $chat = new Chat();
+        $chat->name = 'Chat between ' . $user->name . ' and ' . $secondUser->name;
+        $chat->save();
+
+        $userChat = new Users_chats();
+        $userChat->chat_id = $chat->id;
+        $userChat->owner_id = $user->id;
+        $userChat->user_id = $secondUser->id;
+        $userChat->save();
+
+        return response()->json($chat);
     }
 
 
@@ -71,21 +85,23 @@ class ChatController extends Controller
         return response()->json(['error' => 'Chat not found'], 404);
     }
 
-    public function sendMessage(Request $request, $chatId)
+    public function sendMessage(Request $request, $chatId, $userId)
     {
         $user = $request->user();
         $chat = Chat::FindOrFail($chatId);
+        $secondUser = User::findOrFail($userId);
         if (!$chat) {
             return response()->json(['error' => 'Chat not found'], 404);
         }
-
-        if (!$user->userChats()->where('chat_id', $chatId)->exists()) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
+//
+//        if (!$user->userChats()->where('chat_id', $chatId)->exists()) {
+//            return response()->json(['error' => 'Unauthorized'], 401);
+//        }
 
         $message = new Messages();
         $message->chat_id = $chatId;
         $message->owner_id = $user->id;
+        $message->user_id = $secondUser->id;
         $message->message = $request->input('message');
         $message->save();
 
@@ -122,4 +138,29 @@ class ChatController extends Controller
 
         return response()->json($chat);
     }
+
+    public function getAllMessagesFromChat(Request $request, $chatId, $userId)
+    {
+        $user = $request->user();
+        $secondUser = User::findOrFail($userId);
+
+        $userChat = Users_chats::where(function ($query) use ($user, $secondUser) {
+            $query->where('owner_id', $user->id)
+                ->where('user_id', $secondUser->id);
+        })->orWhere(function ($query) use ($user, $secondUser) {
+            $query->where('owner_id', $secondUser->id)
+                ->where('user_id', $user->id);
+        })->where('chat_id', $chatId)
+            ->first();
+
+        if (!$userChat) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $messages = Messages::where('chat_id', $chatId)->get();
+
+        return response()->json($messages);
+    }
+
+
 }
