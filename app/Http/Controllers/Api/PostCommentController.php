@@ -18,23 +18,7 @@ class PostCommentController extends Controller
 
     public function index()
     {
-        $comments = PostsComments::with('user', 'post')->get();
-
-        $formattedPosts = $comments->map(function ($comments) {
-            return [
-                'id' => $comments->id,
-                'post_id' => $comments->post_id,
-                'content' => $comments->content,
-                'user' => [
-                    'id' => $comments->user->id,
-                    'name' => $comments->user->name,
-                    'avatar' => $comments->user->avatar,
-                ],
-                'created_at' => $comments->created_at,
-            ];
-        });
-
-        return response()->json($formattedPosts);
+        return response()->json($this->postCommentService->index());
     }
 
     public function store(Request $request)
@@ -42,27 +26,5 @@ class PostCommentController extends Controller
         $comment = $this->postCommentService->createComment($request);
 
         return response()->json($comment, 201);
-    }
-
-    public function show(PostsComments $comment)
-    {
-
-        return response()->json($comment);
-    }
-
-    public function update(Request $request, PostsComments $comment)
-    {
-
-        $comment = $this->postCommentService->updateComment($request, $comment);
-
-        return response()->json($comment, 200);
-    }
-
-    public function destroy(PostsComments $comment)
-    {
-
-        $this->postCommentService->deleteComment($comment);
-
-        return response()->json(null, 204);
     }
 }

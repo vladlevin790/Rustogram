@@ -3,7 +3,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\MorePost;
 use App\Models\User;
-use App\Services\Post;
+use App\Services\PostService;
 use App\Http\Controllers\Controller;
 use App\Models\Posts;
 use Illuminate\Http\Request;
@@ -12,9 +12,9 @@ use Illuminate\Support\Facades\Log;
 
 class PostsController extends Controller
 {
-    protected Post $post;
+    protected PostService $post;
 
-    public function __construct(Post $post)
+    public function __construct(PostService $post)
     {
         $this->post = $post;
     }
@@ -65,5 +65,10 @@ class PostsController extends Controller
 
     public function getAnotherUserPost($userID) {
         return response()->json($this->post->getAnotherUserPosts($userID));
+    }
+
+    public function searchPost($username)
+    {
+        return response()->json($this->post->searchPost($username));
     }
 }

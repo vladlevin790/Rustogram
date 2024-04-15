@@ -2,14 +2,21 @@ import React, { useEffect, useRef, useState } from "react";
 import axiosClient from "../axios-client.js";
 import { useStateContext } from "../context/ContextProvider.jsx";
 import { Link } from "react-router-dom";
+import SendIcon from "../Components/SendIcon.jsx";
 
 export default function Messages() {
   const [chats, setChats] = useState([]);
   const [searchResults, setSearchResults] = useState([]);
   const [messages, setMessages] = useState([]);
-  const [selectedUser, setSelectedUser] = useState({ id:null, name: "", avatar: null, onlineStatus: "" });
+  const [selectedUser, setSelectedUser] = useState({ id: null, name: "", avatar: null, onlineStatus: "" });
   const [newMessage, setNewMessage] = useState("");
   const [selectedChatId, setSelectedChatId] = useState(null);
+  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [editMessageText, setEditMessageText] = useState("");
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [isChatModalVisible, setIsChatModalVisible] = useState(false);
+  const [userOnlinStatus, setUserOnlinStatus] = useState('');
   const searchRef = useRef();
   const { user } = useStateContext();
   const messagesEndRef = useRef(null);
@@ -18,7 +25,12 @@ export default function Messages() {
     axiosClient
       .get("/get_chats")
       .then((response) => {
-        setChats(response.data);
+        const updatedChats = response.data.map((chat) => {
+          const lastOnlineMoscowTime = gmtToMoscowTime(chat.second_user.last_online);
+          const userOnlineStatus = chat.second_user.is_online == 1 ? "Онлайн" : `${chat.second_user.gender === "female" ? "Была" : "Был"} в сети ${formatLastOnline(lastOnlineMoscowTime, chat.second_user.is_online == 0)}`;
+          return { ...chat, second_user: { ...chat.second_user, userOnlineStatus, lastOnlineMoscowTime } };
+        });
+        setChats(updatedChats);
       })
       .catch((error) => {
         console.error("Error fetching chats:", error);
@@ -62,7 +74,7 @@ export default function Messages() {
     return "ней";
   };
 
-  const formatLastOnline = (lastOnline, isOnline) => {
+  const formatLastOnline = (lastOnline) => {
     if (!lastOnline) return "";
 
     const timestamp = new Date(lastOnline);
@@ -71,7 +83,7 @@ export default function Messages() {
 
     let formattedTimeString = "";
 
-    if (timeDifferenceInSeconds < 60 || isOnline) {
+    if (timeDifferenceInSeconds < 60) {
       formattedTimeString = "только что";
     } else if (timeDifferenceInSeconds < 3600) {
       const minutesAgo = Math.floor(timeDifferenceInSeconds / 60);
@@ -128,7 +140,7 @@ export default function Messages() {
   };
 
   const handleUserClick = (id, name, avatar, onlineStatus) => {
-    setSelectedUser({id, name, avatar, onlineStatus });
+    setSelectedUser({ id, name, avatar, onlineStatus });
   };
 
   const scrollToBottom = () => {
@@ -141,24 +153,35 @@ export default function Messages() {
     }
   };
 
-  useEffect(() => {
-    fetchChats();
-  }, []);
+  const openModal = (message) => {
+    setSelectedMessage(message);
+    setEditMessageText(message.message);
+    setIsModalVisible(true);
+  };
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+  const closeModal = () => {
+    setSelectedMessage(null);
+    setEditMessageText("");
+    setIsModalVisible(false);
+  };
 
-  useEffect(() => {
-    if (chats.length > 0) {
-      const updatedChats = chats.map((chat) => {
-        const lastOnlineMoscowTime = gmtToMoscowTime(chat.second_user.last_online);
-        const userOnlineStatus = chat.second_user.is_online == 0 ? "Онлайн" : `${chat.second_user.gender === "female" ? "Была" : "Был"} в сети ${formatLastOnline(lastOnlineMoscowTime, chat.second_user.is_online == 0)}`;
-        return { ...chat, userOnlineStatus };
-      });
-      setChats(updatedChats);
+  const handleChatRightClick = (chat) => {
+    console.log("Right-clicked chat:", chat);
+    setSelectedChat(chat);
+    openChatModal(chat);
+  };
+
+  const openChatModal = (chat) => {
+    if (chat && chat.second_user) {
+      setSelectedChat(chat);
+      setIsChatModalVisible(true);
     }
-  }, [chats.length]);
+  };
+
+  const closeChatModal = () => {
+    setSelectedChat(null);
+    setIsChatModalVisible(false);
+  };
 
   const sendMessage = () => {
     if (!selectedChatId) return;
@@ -172,6 +195,67 @@ export default function Messages() {
         console.error("Error sending message:", error);
       });
   };
+
+  const editMessage = () => {
+    if (!selectedMessage) return;
+    axiosClient
+      .put(`/edit_message/${selectedMessage.id}`, { message: editMessageText })
+      .then((response) => {
+        const updatedMessages = messages.map((msg) =>
+          msg.id === response.data.id ? { ...msg, message: response.data.message } : msg
+        );
+        setMessages(updatedMessages);
+        closeModal();
+      })
+      .catch((error) => {
+        console.error("Error editing message:", error);
+      });
+  };
+
+  const deleteChat = () => {
+    if (!selectedChat) return;
+    try {
+      axiosClient.delete(`/delete_chat/${selectedChat.id}`).then(() => {
+        fetchChats();
+        setSelectedChat(null);
+        setSelectedChatId(null);
+        setSelectedUser({ id: null, name: "", avatar: null, onlineStatus: "" });
+        setMessages([]);
+      });
+    } catch (e) {}
+  };
+
+  const deleteMessage = () => {
+    if (!selectedMessage) return;
+    axiosClient
+      .delete(`/delete_message/${selectedMessage.id}`)
+      .then(() => {
+        const filteredMessages = messages.filter((msg) => msg.id !== selectedMessage.id);
+        setMessages(filteredMessages);
+        closeModal();
+      })
+      .catch((error) => {
+        console.error("Error deleting message:", error);
+      });
+  };
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchChats();
+      if (selectedChatId && selectedUser.id) {
+        getAllMessagesFromChat(selectedUser.id, selectedChatId);
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [selectedChatId, selectedUser.id]);
+
+  useEffect(() => {
+    fetchChats();
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   return (
     <main className="flex">
@@ -200,27 +284,43 @@ export default function Messages() {
             <div
               key={chat.id}
               className="flex items-center rounded-xl cursor-pointer w-[300px] h-[53px] p-3 gap-4 font-roboto text-l bg-gray-200"
-              onClick={() => {getAllMessagesFromChat(chat.second_user.id, chat.id)
-                handleUserClick(chat.second_user.id, chat.second_user.name, chat.second_user.avatar, chat.userOnlineStatus)
+              onClick={() => {
+                getAllMessagesFromChat(chat.second_user.id, chat.id);
+                handleUserClick(chat.second_user.id, chat.second_user.name, chat.second_user.avatar, chat.second_user.userOnlineStatus);
                 setSelectedChatId(chat.id);
+              }}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                handleChatRightClick(chat);
               }}
             >
               {chat.second_user.avatar !== null ? <img src={chat.second_user.avatar} alt="" /> : <img src="../../src/media/icons/user.png" alt="" />}
               <div className="flex flex-col">
                 <h2>{chat.second_user.name}</h2>
-                {chat.userOnlineStatus && (
-                  <>
-                    {chat.userOnlineStatus === "Онлайн" ? (
+                    {chat.second_user.userOnlineStatus === "Онлайн" ? (
                       <div className="flex align-content-center items-center gap-1">
                         <p className="text-l text-green-700">◉</p>
-                        <p className="font-semibold font-roboto text-l text-green-700">{chat.userOnlineStatus}</p>
+                        <p className="font-semibold font-roboto text-l text-green-700">{chat.second_user.userOnlineStatus}</p>
                       </div>
                     ) : (
-                      <p className="font-roboto text-l font-thin">{chat.userOnlineStatus}</p>
+                      <p className="font-roboto text-l font-thin">{chat.second_user.userOnlineStatus}</p>
                     )}
-                  </>
-                )}
               </div>
+              {isChatModalVisible && selectedChat && (
+                <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-black bg-opacity-50 z-50">
+                  <div className="bg-white p-4 rounded-lg">
+                    <p className="text-xl font-semibold mb-4">Вы уверены, что хотите удалить чат с {selectedChat.second_user ? selectedChat.second_user.name : ""}?</p>
+                    <div className="flex justify-between">
+                      <button onClick={deleteChat} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                        Удалить чат
+                      </button>
+                      <button onClick={closeChatModal} className="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                        Отмена
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </article>
@@ -248,10 +348,10 @@ export default function Messages() {
           <div className="flex justify-center border-b-2 p-10 w-full">
             <div className="flex items-center gap-4 bg-gray-200 px-5 py-3 rounded-xl">
               {selectedUser.avatar !== null ? (
-                <img src={selectedUser.avatar} alt="" className="rounded-full h-[37px] w-[37px]"/>
+                <img src={selectedUser.avatar} alt="" className="rounded-full h-[37px] w-[37px]" />
               ) : (
                 <div className="flex justify-center items-center rounded-full h-[70px] w-[70px] bg-gray-200">
-                  <img src="../../src/media/icons/user.png" alt="" className="object-cover h-[48px] w-[47px]"/>
+                  <img src="../../src/media/icons/user.png" alt="" className="object-cover h-[48px] w-[47px]" />
                 </div>
               )}
               <div className="font-roboto flex flex-col">
@@ -272,28 +372,75 @@ export default function Messages() {
             </div>
           </div>
 
-          <div className="flex flex-col-reverse h-[550px] gap-4 w-full overflow-y-auto">
-            {messages.length === 0 && (
-              <div className="font-roboto text-center text-gray-500">Начните диалог, написав "привет;)"</div>
-            )}
-            {messages.slice(0).reverse().map((message) => (
-              <div key={message.id}
-                   className={message.owner_id == user.id ? 'ml-auto font-roboto text-white p-3 rounded-xl text-xl bg-[#534CA5] w-max' : 'mr-auto font-roboto text-white p-3 rounded-xl text-xl bg-[#547B84] w-max'}>
-                {message.message}
+          <div className="flex flex-col-reverse h-[530px] gap-4 w-full overflow-y-auto mb-4">
+            {selectedUser.id !== null && (<>
+              {messages && messages.length === 0 && (
+                <div className="font-roboto text-center text-gray-500">Начните диалог, написав "привет;)"</div>
+              )}
+              {messages && Array.isArray(messages) && messages.length !== 0 && messages.slice().reverse().map((message) => (
+                <div
+                  key={message.id}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    openModal(message);
+                  }}
+                  className={message.owner_id == user.id ? 'ml-auto mr-5 font-roboto text-white p-3 rounded-xl text-xl bg-[#534CA5] w-max' : 'mr-auto ml-5 font-roboto text-white p-3 rounded-xl text-xl bg-[#547B84] w-max'}
+                >
+                  {message.message}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+              {isModalVisible && (
+                <div className="absolute top-0 left-0 w-full h-full flex justify-center items-center bg-black bg-opacity-50 z-50">
+                  <div className="bg-white p-4 rounded-lg">
+                    <input
+                      type="text"
+                      value={editMessageText}
+                      onChange={(e) => setEditMessageText(e.target.value)}
+                      className="border rounded-md py-2 px-4 w-full mb-2"
+                    />
+                    <div className="flex justify-between">
+                      <button onClick={editMessage} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        Сохранить
+                      </button>
+                      <button onClick={deleteMessage} className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+                        Удалить
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              </>)}
+            {selectedUser.id == null && (
+              <div className="flex gap-10 font-roboto text-2xl justify-center text-black-50">
+                <span className="mr-1 flex items-center gap-2 animate-ping transition-animation">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                       className="w-4 h-4">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                  </svg>
+                </span>
+                <h2>
+                  Выберите чат слева, чтобы начать диалог
+                </h2>
               </div>
-            ))}
-            <div ref={messagesEndRef}/>
+            )}
           </div>
         </article>
-
-        <article className="flex items-center">
-          <div className="flex-grow">
-            <input type="text" className="border rounded-md py-2 px-4 w-full" value={newMessage}
-                   onChange={(e) => setNewMessage(e.target.value)}/>
-          </div>
-          <button onClick={sendMessage}
-                  className="bg-blue-500 text-white font-semibold py-2 px-4 ml-2 rounded-md">Отправить
-          </button>
+        <article className="flex items-center justify-center font-roboto">
+          {selectedUser.id != null && (
+            <div className="flex items-center w-[483px] bg-gray-200 py-1 px-4 rounded-3xl mb-2 ">
+              <div className="flex-grow">
+                <input type="text" className="border rounded-md py-2 px-4 w-full bg-transparent" value={newMessage}
+                       onChange={(e) => setNewMessage(e.target.value)} placeholder="Введите текст сообщения..." />
+              </div>
+              <button onClick={sendMessage}>
+                <SendIcon />
+              </button>
+            </div>
+          )}
+          {selectedUser.id == null && (
+            <h2 className="font-rustogram text-4xl animate-bounce">R</h2>
+          )}
         </article>
       </section>
     </main>

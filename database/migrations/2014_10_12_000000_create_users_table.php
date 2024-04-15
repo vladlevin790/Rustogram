@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('gender')->default('');
             $table->boolean('is_online')->default(false);
             $table->timestamp('last_online')->nullable();
+            $table->boolean('is_admin')->default(false);
             $table->rememberToken()->nullable();
             $table->timestamps();
         });

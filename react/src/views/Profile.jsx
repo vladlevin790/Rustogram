@@ -168,6 +168,7 @@ export default function Profile() {
       if (response.data.Success) {
         toast.success('История успешно создана');
         setIsCreateStory(false);
+        fetchDataStories();
       } else {
         toast.error('Произошла ошибка при создании истории');
       }
@@ -304,7 +305,7 @@ export default function Profile() {
   return (
     <section className="flex flex-col mt-16">
       <article className="flex ml-60">
-        <div className=" flex flex-col gap-2 w-[178px]">
+        <div className="flex flex-col gap-2 w-[178px]">
           {isAvatar && (<img className="rounded-full w-[130px] h-[130px]" src={user.avatar} alt=""/>)}
           {!isAvatar && (
             <div className="flex  items-center justify-center p-4 bg-gray-300 rounded-full w-[130px] h-[130px]">
@@ -318,16 +319,25 @@ export default function Profile() {
             <button className="bg-gray-300 py-9 px-[52px] rounded-full text-white font-bold text-4xl font-roboto" onClick={() => setIsCreateStory(true)}>
               +
             </button>
-            <div className="flex flex-col w-[700px] ml-2">
-              <Slider {...settings}>
-                {filteredStories.map((story,index) => (
-                  <div className="relative cursor-pointer">
-                    <Story key={story.id} story={story} onClick={() => handleStoryClick(story,index)} />
-                    <button className="absolute top-0 left-0 w-full h-full  " onClick={()=> handleStoryClick(story,index)}></button>
-                  </div>
-                ))}
-              </Slider>
-            </div>
+            {filteredStories.length === 1 ? (
+              <div className="flex flex-col w-[700px] ml-2">
+                <div className="relative cursor-pointer">
+                  <Story key={filteredStories[0].id} story={filteredStories[0]} onClick={() => handleStoryClick(filteredStories[0], 0)} />
+                  <button className="absolute top-0 left-0 w-full h-full" onClick={() => handleStoryClick(filteredStories[0], 0)}></button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col w-[700px] ml-2">
+                <Slider {...settings}>
+                  {filteredStories.map((story,index) => (
+                    <div className="relative cursor-pointer">
+                      <Story key={story.id} story={story} onClick={() => handleStoryClick(story,index)} />
+                      <button className="absolute top-0 left-0 w-full h-full  " onClick={()=> handleStoryClick(story,index)}></button>
+                    </div>
+                  ))}
+                </Slider>
+              </div>
+            )}
             {selectedStory && (
               <div className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center" onClick={(e) => {
                 if (e.target === e.currentTarget) {

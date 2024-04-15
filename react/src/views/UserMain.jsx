@@ -7,7 +7,6 @@ import {Navigate, useNavigate} from "react-router-dom";
 import toast, {Toaster} from "react-hot-toast";
 
 export default function UserMain() {
-  const [newStory, setNewStory] = useState(false);
   const [postsData, setPostsData] = useState([]);
   const [likesData, setLikesData] = useState([]);
   const { user } = useStateContext();
@@ -25,6 +24,7 @@ export default function UserMain() {
       navigate('/user_insert_update');
     }
   })
+
   const fetchData = async () => {
     try {
       let postsResponse;
@@ -153,6 +153,9 @@ export default function UserMain() {
   };
 
   const handleStoryClick = (story, index) => {
+    if (!viewedStories || !viewedStories.includes) {
+      return;
+    }
     if (!viewedStories.includes(story.id)) {
        axiosClient.post(`/stories/look/${user.id}/${story.id}`);
        setViewedStories([...viewedStories, story.id]);
@@ -191,7 +194,13 @@ export default function UserMain() {
     fetchDataAsync();
   }, [user, currentTab]);
 
-  console.log(viewedStories);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchData();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [postsData]);
+
   return (
     <div className="flex flex-col justify-center items-center">
       <header className="flex mt-[26px] mb-[7px] border-b w-[1299px] ">
@@ -199,7 +208,7 @@ export default function UserMain() {
           {storyData.length > 0 && storyData.map((story, index) => {
             const previousStory = index > 0 ? storyData[index - 1] : null;
             const isSameUser = previousStory && previousStory.user.id === story.user.id;
-            const isViewed = viewedStories.includes(story.id);
+            const isViewed = viewedStories ? viewedStories.includes(story.id) : false;
 
             if (isSameUser) {
               return null;
@@ -280,7 +289,7 @@ export default function UserMain() {
       </div>
       <main>
         {postsData.map(post => (
-          <Post key={post.id} post={post} onLikeClick={handleLikeClick} likesData={likesData} user={user} isOwner={post.user.id == user.id} updatePostsList={updatePostsList} updatePostDescription={updatePostDescription} updatePostImagesOrVideosNumbered={updatePostImagesOrVideosNumbered} comments={comments} setComments={setComments} handleCommentSubmit={handleCommentSubmit} newCommentText={newCommentText} setNewCommentText={setNewCommentText}/>
+          <Post key={post.id} post={post} onLikeClick={handleLikeClick} likesData={likesData} user={user} isOwner={post.user.id == user.id || user.is_admin == 1} updatePostsList={updatePostsList} updatePostDescription={updatePostDescription} updatePostImagesOrVideosNumbered={updatePostImagesOrVideosNumbered} comments={comments} setComments={setComments} handleCommentSubmit={handleCommentSubmit} newCommentText={newCommentText} setNewCommentText={setNewCommentText}/>
         ))}
       </main>
       <Toaster />

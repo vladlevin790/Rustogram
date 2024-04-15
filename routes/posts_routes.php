@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PostsController;
 
+Route::get('/posts/search/{username}',[PostsController::class,'searchPost']);
 Route::post('/posts', [PostsController::class, 'store']);
 Route::get('/posts', [PostsController::class, 'index']);
 Route::get('/posts/subscription/{userId}',[PostsController::class,'subscriptionIndex']);

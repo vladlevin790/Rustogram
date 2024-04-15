@@ -4,7 +4,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HashtagController;
 use App\Http\Controllers\Api\PostsController;
 use App\Http\Controllers\Api\UserController;
-use App\Http\Controllers\UserSignUpUpdateController;
+use App\Http\Controllers\Api\UserSignUpUpdateController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -30,7 +30,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user_main', function (Request $request) {
         return $request->user();
     });
-    Route::apiResource('/hashtags', HashtagController::class)->except(['index']);
     Route::get('/user_profile/another_user/{userid}',[UserController::class,'getAnotherUser']);
     Route::get('/posts/another_user/{userId}', [PostsController::class, 'getAnotherUserPost']);
 });

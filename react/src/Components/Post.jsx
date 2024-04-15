@@ -104,17 +104,17 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
   };
 
   return (
-    <article className="flex static flex-col w-[770px]  bg-[#F9F8F8] border border-gray-300 rounded-md shadow-md mb-4 relative">
+    <article className="flex static flex-col w-[770px]  bg-[#F9F8F8] border border-gray-300 rounded-md shadow-md mb-4 relative font-roboto">
       {isOwner && (<button className="absolute top-6 right-2 p-2 bg-gray-50 flex items-center rounded-3xl h-14 opacity-45 z-10" onClick={() => {
         setPostEdit(!postEdit);
       }}><Burger className="w-10 mt-4 ml-4"/></button>)}
       {!postEdit &&(<>
         {(isImage || isVideo || hasMoreImages || hasMoreVideos) && (
           <>
-            {isImage && !hasMoreImages && <img src={post.image_path} alt={post.altText} className="rounded-md mb-2 h-[691px]"/>}
+            {isImage && !hasMoreImages && <img src={post.image_path} alt={post.altText} className="object-cover rounded-md mb-2 h-[691px]"/>}
             {isVideo && !hasMoreVideos (
               <div className="relative mb-2">
-                <video src={post.video_path} alt={post.altText} className="rounded-md w-full h-[691px]" controls></video>
+                <video src={post.video_path} alt={post.altText} className="object-cover rounded-md w-full h-[691px]" controls></video>
               </div>
             )}
             {hasMoreImages && (
@@ -122,12 +122,12 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
                 <Slider {...settings} ref={sliderRef}>
                   {post.image_path && (
                     <div className="relative">
-                      <img src={post.image_path} alt="Main Image" className="rounded-md mb-2 h-[691px] w-[770px]"/>
+                      <img src={post.image_path} alt="Main Image" className="object-cover rounded-md mb-2 h-[691px] w-[770px]"/>
                     </div>
                   )}
                   {post.more_image_path.map((image, index) => (
                     <div key={index}>
-                      <img src={image} alt={`Slide ${index}`} className="rounded-md mb-2 h-[691px] w-[770px]"/>
+                      <img src={image} alt={`Slide ${index}`} className="object-cover rounded-md mb-2 h-[691px] w-[770px]"/>
                     </div>
                   ))}
                 </Slider>
@@ -183,13 +183,14 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
                   </div>
                   <h2 className="font-semibold text-[30px] font-roboto">{post.user.name}</h2>
                 </Link>
-                <div className="flex items-center w-[200px] font-semibold text-[20px]">
+                <div className="flex flex-col items-center w-[200px] font-semibold font-roboto text-[20px]">
                   <h2>{post.likes} {formatLikesWord(post.likes)}</h2>
+                  <h2>{post.description}</h2>
                 </div>
               </div>
               <h2 className="font-semibold mb-5">Комментарии</h2>
               <PostComments postComments={commentsPost}/>
-              <div className="flex items-center mb-2 justify-center gap-2">
+              <div className="flex items-center font-roboto mb-2 justify-center gap-2">
                 <input
                   className="flex p-2 border border-gray-300 rounded-md w-[350px] "
                   value={newCommentText}
@@ -232,8 +233,9 @@ export default function Post({ post, onLikeClick, likesData, user, isOwner, upda
           {isAvatar ? <img className="w-[50px] h-[50px] rounded-full" src={post.user.avatar} alt="" /> : <img src="../../src/media/icons/user.svg" className="h-[39px] w-[37px]" />}
           <h2 className="font-semibold text-[30px] font-roboto">{post.user.name}</h2>
         </Link>)}
-        {!isComment && (<div className="flex mt-5 w-full ml-8 font-semibold text-[20px]">
+        {!isComment && (<div className="flex flex-col mt-5 w-full ml-8 font-semibold text-[20px]">
           <h2>{post.likes} {formatLikesWord(post.likes)}</h2>
+          <h2>{post.description}</h2>
         </div>)}
         <div className="w-full flex items-center cursor-pointer">
           <Burger className="w-6 ml-4 mt-3" />

@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Services\Post;
+use App\Services\PostService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -19,6 +19,6 @@ class Hashtag extends Model
 
     public function post()
     {
-        return $this->belongsTo(Post::class);
+        return $this->belongsTo(Posts::class);
     }
 }
