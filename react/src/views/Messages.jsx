@@ -294,7 +294,7 @@ export default function Messages() {
                 handleChatRightClick(chat);
               }}
             >
-              {chat.second_user.avatar !== null ? <img src={chat.second_user.avatar} alt="" /> : <img src="../../src/media/icons/user.png" alt="" />}
+              {chat.second_user.avatar !== null ? <img src={chat.second_user.avatar} alt="" className="w-[41px] h-[41px] rounded-full" /> : <img src="../../src/media/icons/user.png" alt="" />}
               <div className="flex flex-col">
                 <h2>{chat.second_user.name}</h2>
                     {chat.second_user.userOnlineStatus === "Онлайн" ? (

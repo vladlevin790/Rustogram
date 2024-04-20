@@ -77,4 +77,17 @@ class User extends Authenticatable
     public function userChats(){
         return $this->hasMany(Users_chats::class);
     }
+
+    public function reels(){
+        return $this->hasMany(Reels::class,'user_id');
+    }
+
+    public function reelsLike()
+    {
+        return $this->hasMany(Reels_like::class);
+    }
+    public function reelsComment()
+    {
+        return $this->hasMany(Reels_comment::class);
+    }
 }

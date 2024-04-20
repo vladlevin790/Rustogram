@@ -26,6 +26,7 @@ Route::middleware('auth:sanctum')->group(function () {
     require __DIR__ . '/stories_routes.php';
     require __DIR__ . '/subscribed_routes.php';
     require __DIR__ . '/messanger_router.php';
+    require __DIR__ . '/reels_router.php';
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user_main', function (Request $request) {
         return $request->user();

@@ -8,4 +8,18 @@ use Illuminate\Database\Eloquent\Model;
 class Reels_comment extends Model
 {
     use HasFactory;
+
+    protected $fillable = [
+        'user_id',
+        'reels_id',
+        'content'
+    ];
+
+    public function reels() {
+        return $this->belongsTo(Reels::class);
+    }
+
+    public function user() {
+        return $this->belongsTo(User::class);
+    }
 }

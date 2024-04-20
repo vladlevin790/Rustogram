@@ -44,7 +44,6 @@ class LikeServices
             $like = PostsLike::where('user_id', $userId)->where('post_id', $postId)->first();
 
             if ($like) {
-                Log::info("User $userId is trying to like post $postId");
                 return response()->json(['message' => 'PostService already liked'], 422);
             }
 
