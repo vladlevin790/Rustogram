@@ -53,7 +53,7 @@ export default function Shorts() {
       const response = await axiosClient.post('/create_shorts', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${localStorage.getItem('ACCESS_TOKEN')}`,
+          Authorization: `Bearer ${sessionStorage.getItem('ACCESS_TOKEN')}`,
         }
       });
 
@@ -61,6 +61,7 @@ export default function Shorts() {
       setShortsList([...shortsList, response.data]);
       setVideo(null);
       setDescription('');
+      fetchShorts();
     } catch (error) {
       setMessage('Failed to create short video.');
       console.error(error);
@@ -207,16 +208,83 @@ export default function Shorts() {
     }
   };
 
+  const formatLikesCount = (count) => {
+    const lastDigit = count % 10;
+    const lastTwoDigits = count % 100;
+
+    if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+      return `${count} лайков`;
+    }
+
+    if (lastDigit === 1) {
+      return `${count} лайк`;
+    }
+
+    if (lastDigit >= 2 && lastDigit <= 4) {
+      return `${count} лайка`;
+    }
+
+    return `${count} лайков`;
+  };
+
+  const handleDeleteShorts = (shortsId) => {
+    try {
+      axiosClient.delete(`/delete_shorts/${shortsId}`,{
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem('ACCESS_TOKEN')}`,
+        }
+      });
+      fetchShorts();
+    } catch (e) {
+      console.log(e);
+    }
+  }
+
   return (
     <div>
-      <button onClick={toggleMode}>{mode === 'create' ? 'View Shorts' : 'Create Short'}</button>
+      <button onClick={toggleMode} className="fixed bottom-5 right-10 bg-blue-400 text-white rounded-xl p-4">{mode === 'create' ? 'Смотреть' : 'Создать'}</button>
       {mode === 'create' && (
-        <form onSubmit={handleSubmit}>
-          <input type="file" accept="video/mp4,video/hevc" onChange={handleFileChange} />
-          <textarea placeholder="Description" value={description} onChange={handleDescriptionChange} />
-          <button type="submit">Create Short</button>
-        </form>
+        <div className="flex flex-col items-center justify-center mt-5 gap-4 w-[1300px] h-screen">
+          <div className="bg-gray-200 p-8 flex flex-col items-center rounded-lg shadow-lg">
+            <h1 className="text-3xl font-semibold mb-4">Создать шортс</h1>
+            <form onSubmit={handleSubmit} className="flex flex-col items-center gap-6">
+              <div className="flex items-center justify-center">
+                <label htmlFor="fileInput" className="relative cursor-pointer bg-blue-500 text-white py-2 px-4 rounded-lg transition duration-300 hover:bg-blue-600 focus:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+                  <span>Выбрать видео</span>
+                  <input
+                    type="file"
+                    accept="video/mp4,video/hevc"
+                    onChange={handleFileChange}
+                    className="hidden"
+                    id="fileInput"
+                  />
+                </label>
+              </div>
+              {video && (
+                <div className="mt-4 w-[300px] h-[400px] mb-40">
+                  <video controls className="w-full">
+                    <source src={URL.createObjectURL(video)} type="video/mp4" />
+                    Ваш браузер не поддерживает видео.
+                  </video>
+                </div>
+              )}
+              <textarea
+                placeholder="Описание"
+                value={description}
+                onChange={handleDescriptionChange}
+                className="w-full max-w-md h-24 px-4 py-2 border border-gray-300 rounded-md resize-none focus:outline-none focus:border-blue-500"
+              />
+              <button
+                type="submit"
+                className="py-2 px-6 bg-blue-500 text-white rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              >
+                Создать шорт
+              </button>
+            </form>
+          </div>
+        </div>
       )}
+
       {mode === 'view' && (
         <div className="flex flex-col items-center mt-5 justify-center gap-4 w-[1300px]">
           {shortsList.map(shorts => (
@@ -227,12 +295,12 @@ export default function Shorts() {
               />
               <div className="absolute bottom-10 left-5 text-white font-roboto z-20">
                 <Link to={`/user_profile/${shorts.user_id}`} className="flex items-center gap-2 w-full">
-                  {isAvatar ? <img className="w-[50px] h-[50px] rounded-full" src={user.avatar} alt="" /> : <UserIcon className="h-[39px] w-[37px] fill-white" />}
-                  <h2 className="font-semibold text-[30px] font-roboto">{user.name}</h2>
+                  {isAvatar ? <img className="w-[50px] h-[50px] rounded-full" src={shorts.user.avatar} alt="" /> : <UserIcon className="h-[39px] w-[37px] fill-white" />}
+                  <h2 className="font-semibold text-[30px] font-roboto">{shorts.user.name}</h2>
                 </Link>
-                <p className="text-2xl mt-2">{shorts.description}</p>
+                <p className="text-2xl mt-2 font-roboto">{shorts.description}</p>
                 <div>
-                  <span>{likesData.filter(like => like.reels && like.reels.id === shorts.id).length}</span>
+                  <span className="font-roboto">{formatLikesCount(likesData.filter(like => like.reels && like.reels.id === shorts.id).length)}</span>
                 </div>
                 {commentOpenId === shorts.id && commentsOpen && (
                   <div className="w-[400px]">
@@ -305,12 +373,16 @@ export default function Shorts() {
                 <button>
                   <PaperPlaneIcon className="w-30 hover:fill-gray-400 transition cursor-pointer fill-white"/>
                 </button>
+                {(shorts.user_id === user.id || user.is_admin === 1) && (
+                  <button onClick={() => handleDeleteShorts(shorts.id)} className="p-2 bg-red-500 text-white rounded-md hover:bg-red-600">
+                    Удалить
+                  </button>
+                )}
               </div>
             </div>
           ))}
         </div>
       )}
-      <p>{message}</p>
     </div>
   );
 }

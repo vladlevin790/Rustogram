@@ -10,6 +10,7 @@ use Cassandra\Exception\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class ReelsController extends Controller
 {
@@ -55,6 +56,10 @@ class ReelsController extends Controller
             $user = $request->user();
             $reels = Reels::FindOrFail($shortsId);
             if($reels->user_id == $user->id) {
+                $videoPath = str_replace('http://localhost:8000/storage/', 'public/', $reels->video_path);
+                Storage::delete($videoPath);
+                $reels->comments()->delete();
+                $reels->likes()->delete();
                 $reels->delete();
             }
             return response()->json(['Success' => true, 'Message'=>'deleted']);
