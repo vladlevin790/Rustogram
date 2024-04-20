@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class StoriesController extends Controller
 {
@@ -92,17 +93,25 @@ class StoriesController extends Controller
         }
     }
 
-    public function deleteStory($storyId) {
+    public function deleteStory(Request $request,$storyId) {
         try {
-            $user = Auth::user();
+            $user = $request->user();
             $story = Stories::FindOrFail($storyId);
-            $imagePath = str_replace('http://localhost:8000/storage/', 'public/', $story->image_path);
-            $videoPath = str_replace('http://localhost:8000/storage/', 'public/', $story->video_path);
-            Storage::delete($imagePath);
-            Storage::delete($videoPath);
-            $story->delete();
+            if($user->is_admin == 1 || $story->user_id == $user->id) {
+                Looked_stories::where('story_id', $storyId)->delete();
+                if($story->image_path != null) {
+                    $imagePath = str_replace('http://localhost:8000/storage/', 'public/', $story->image_path);
+                    Storage::delete($imagePath);
+                }
+                if($story->image_path != null) {
+                    $videoPath = str_replace('http://localhost:8000/storage/', 'public/', $story->video_path);
+                    Storage::delete($videoPath);
+                }
+                $story->delete();
+            }
             return response()->json(['Success' => true, 'status' => 200]);
         } catch (\Exception $e) {
+            Log::info($e->getMessage());
             return response()->json(['Success' => false]);
         }
     }

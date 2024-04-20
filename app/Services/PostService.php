@@ -98,7 +98,7 @@ class PostService
         try {
             $user = Auth::user();
             $post = Posts::FindOrFail($postId);
-            if ($user->id !== $post->user_id) {
+            if ($user->is_admin == 1 || $user->id !== $post->user_id) {
                 abort(403, 'Вы не являетесь владельцем этого поста и не можете его удалить');
             }
             $post->comments()->delete();

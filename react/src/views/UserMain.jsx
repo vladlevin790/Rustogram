@@ -2,9 +2,9 @@ import React, { useEffect, useState } from "react";
 import Post from "../Components/Post.jsx";
 import Story from "../Components/Story.jsx";
 import axiosClient from "../axios-client.js";
-import {useStateContext} from "../context/ContextProvider.jsx";
-import {Navigate, useNavigate} from "react-router-dom";
-import toast, {Toaster} from "react-hot-toast";
+import { useStateContext } from "../context/ContextProvider.jsx";
+import { Navigate, useNavigate } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function UserMain() {
   const [postsData, setPostsData] = useState([]);
@@ -12,18 +12,18 @@ export default function UserMain() {
   const { user } = useStateContext();
   const [comments, setComments] = useState([]);
   const [newCommentText, setNewCommentText] = useState('');
-  const [storyData,setStoryData] = useState([]);
+  const [storyData, setStoryData] = useState([]);
   const [selectedStory, setSelectedStory] = useState(null);
   const [selectedStoryIndex, setSelectedStoryIndex] = useState(null);
   const [currentTab, setCurrentTab] = useState("myFeed");
   const [viewedStories, setViewedStories] = useState([]);
   const navigate = useNavigate();
 
-  axiosClient.get('user_main').then(({data})=>{
-    if(data.birthday == undefined || data.birthday == null) {
+  axiosClient.get('user_main').then(({ data }) => {
+    if (data.birthday == undefined || data.birthday == null) {
       navigate('/user_insert_update');
     }
-  })
+  });
 
   const fetchData = async () => {
     try {
@@ -104,7 +104,7 @@ export default function UserMain() {
       // toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
     }
   }
-  const handleCommentSubmit = async (postId,postUserId) => {
+  const handleCommentSubmit = async (postId, postUserId) => {
     try {
       const response = await axiosClient.post(`/posts/${postId}/comments`, {
         user_id: postUserId,
@@ -157,8 +157,8 @@ export default function UserMain() {
       return;
     }
     if (!viewedStories.includes(story.id)) {
-       axiosClient.post(`/stories/look/${user.id}/${story.id}`);
-       setViewedStories([...viewedStories, story.id]);
+      axiosClient.post(`/stories/look/${user.id}/${story.id}`);
+      setViewedStories([...viewedStories, story.id]);
     }
     setSelectedStory(story);
     setSelectedStoryIndex(index);
@@ -180,6 +180,21 @@ export default function UserMain() {
     }
   };
 
+  const handleStoryDelete = async (storyId) => {
+    try {
+      await axiosClient.delete(`/stories/delete/${storyId}`, {
+        headers: {
+          Authorization: `Bearer ${sessionStorage.getItem('ACCESS_TOKEN')}`,
+        }
+      });
+      setStoryData(storyData.filter(story => story.id !== storyId));
+      setSelectedStory(null);
+      setSelectedStoryIndex(null);
+      toast("История успешно удалена", {style: {background: "#6EE7B7", fontFamily: "Roboto", fontSize: '20px', color: 'white'}});
+    } catch (error) {
+      toast("Что-то пошло не так при удалении истории", {style: {background: "#FDA0A0", fontFamily: "Roboto", fontSize: '20px', color: 'white'}});
+    }
+  };
 
   useEffect(() => {
     const fetchDataAsync = async () => {
@@ -229,7 +244,7 @@ export default function UserMain() {
                  if (e.target === e.currentTarget) {
                    setSelectedStory(null);
                  }
-          }}>
+               }}>
             <div className="max-w-2xl mx-auto bg-white  rounded">
 
               {selectedStory.image_path && (
@@ -241,6 +256,9 @@ export default function UserMain() {
               )}
               <h2 className="text-xl font-bold mb-4 ml-4">Описание: {selectedStory.description}</h2>
               <h2 className="text-xl font-bold mb-4 ml-4">Пользователь: {selectedStory.user.name}</h2>
+              {(selectedStory.user.id === user.id || user.is_admin === 1) &&
+                (<button onClick={() => handleStoryDelete(selectedStory.id)}
+                        className="p-2 bg-red-500 text-white rounded-md hover:bg-red-600 ml-4 mb-2">Удалить</button>)}
               <button
                 className="absolute top-[50%] left-[30%] w-12  bg-gray-400 flex justify-center p-2 rounded-full ml-2 opacity-50"
                 onClick={() => handleStoryChange(-1)}

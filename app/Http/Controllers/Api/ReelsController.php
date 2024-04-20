@@ -55,7 +55,7 @@ class ReelsController extends Controller
         try {
             $user = $request->user();
             $reels = Reels::FindOrFail($shortsId);
-            if($reels->user_id == $user->id) {
+            if($user->is_admin == 1  || $reels->user_id == $user->id) {
                 $videoPath = str_replace('http://localhost:8000/storage/', 'public/', $reels->video_path);
                 Storage::delete($videoPath);
                 $reels->comments()->delete();
