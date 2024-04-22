@@ -3,7 +3,7 @@ import DefaultLayout from "./Layouts/DefaultLayout";
 import GuestLayout from "./Layouts/GuestLayout";
 import Login from "./views/Login";
 import NotFound from "./views/NotFound";
-import Signup from "./views/Signup";
+import Signup from "./views/Register.jsx";
 import UserMain from "./views/UserMain.jsx";
 import Search from "./views/Search.jsx";
 import Explore from "./views/Explore.jsx";
@@ -14,6 +14,7 @@ import Profile from "./views/Profile.jsx";
 import CreationPost from "./views/CreationPost.jsx";
 import InsertUpdateUser from "./views/InsertUpdateUser.jsx";
 import AnotherUserProfile from "./views/AnotherUserProfile.jsx";
+import PasswordReset from "./views/PasswordReset.jsx";
 
 const router = createBrowserRouter([
   {
@@ -77,6 +78,10 @@ const router = createBrowserRouter([
       {
         path: '/signup',
         element: <Signup/>
+      },
+      {
+        path: '/password_reset',
+        element: <PasswordReset/>
       }
     ]
   },

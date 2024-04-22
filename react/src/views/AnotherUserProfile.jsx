@@ -390,15 +390,26 @@ export default function AnotherUserProfile() {
           </article>
           <article className="flex justify-center items-center  w-[1000px] border-b ml-20 mt-5 mb-5">
             <div className="flex flex-col w-[700px] ml-2">
-              <Slider {...settings}>
-                {filteredStories.map((story, index) => (
-                  <div className="relative cursor-pointer">
-                    <Story key={story.id} story={story} onClick={() => handleStoryClick(story, index)}/>
-                    <button className="absolute top-0 left-0 w-full h-full  "
-                            onClick={() => handleStoryClick(story, index)}></button>
-                  </div>
-                ))}
-              </Slider>
+              {filteredStories.length > 1 ? (
+                <Slider {...settings}>
+                  {filteredStories.map((story, index) => (
+                    <div className="relative cursor-pointer" key={story.id}>
+                      <Story story={story} onClick={() => handleStoryClick(story, index)} />
+                      <button className="absolute top-0 left-0 w-full h-full" onClick={() => handleStoryClick(story, index)}></button>
+                    </div>
+                  ))}
+                </Slider>
+              ) : (
+                <>
+                  {filteredStories.map((story, index) => (
+                    <div className="relative cursor-pointer" key={story.id}>
+                      <Story story={story} onClick={() => handleStoryClick(story, index)} />
+                      <button className="absolute top-0 left-0 w-full h-full" onClick={() => handleStoryClick(story, index)}></button>
+                    </div>
+                  ))}
+                </>
+              )}
+
               {selectedStory && (
                 <div
                   className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center"

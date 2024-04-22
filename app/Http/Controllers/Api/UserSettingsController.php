@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class UserSettingsController extends Controller
 {
@@ -17,7 +18,6 @@ class UserSettingsController extends Controller
                 'name' => 'nullable|string',
                 'email' => 'nullable|email|string',
                 'bio' => 'nullable|string',
-                'password' => 'nullable|string',
                 'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif',
                 'birthday' => 'nullable|date',
                 'gender' => 'nullable|in:male,female',
@@ -31,11 +31,6 @@ class UserSettingsController extends Controller
             if (isset($data['email'])) {
                 $user->email = $data['email'];
                 $user->update(['email'=>$user->email]);
-            }
-
-            if (isset($data['password'])) {
-                $user->password = bcrypt($data['password']);
-                $user->update(['password'=>$user->password]);
             }
 
             if ($request->hasFile('avatar')) {
@@ -65,6 +60,7 @@ class UserSettingsController extends Controller
 
             return response()->json(['message' => 'User updated successfully'], 200);
         } catch (\Exception $e) {
+            Log::error($e->getMessage());
             return response()->json(['message' => 'Failed to update user'], 500);
         }
     }

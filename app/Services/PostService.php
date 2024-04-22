@@ -75,20 +75,25 @@ class PostService
             $user = Auth::user();
             $data = $request->validate([
                 'image_path' => 'nullable|image|mimes:jpeg,png,jpg,gif',
-                'video_path' => 'nullable|string',
+                'video_path' => 'nullable|file|mimes:mp4',
                 'description' => 'nullable|string',
             ]);
+            if (!$request->hasFile('image_path') && !$request->hasFile('video_path')) {
+                return response()->json(['success' => false, 'message' => 'At least one of image or video is required'], 400);
+            }
             if ($request->hasFile('image_path')) {
                 $imagePath = $request->file('image_path')->store('public/images');
                 $data['image_path'] = url(\Storage::url($imagePath));
             }
             if ($request->hasFile('video_path')) {
-                $videoPath = $request->file('video_path')->store('public/images');
+                $videoPath = $request->file('video_path')->store('public/videos');
                 $data['video_path'] = url(\Storage::url($videoPath));
+                Log::info($data);
             }
             $posts = $user->posts()->create($data);
             return $posts;
         } catch (\Exception $e) {
+            Log::error($e);
             return ['Success'=>false,'Message'=>'Error creating post'];
         }
     }
@@ -98,7 +103,7 @@ class PostService
         try {
             $user = Auth::user();
             $post = Posts::FindOrFail($postId);
-            if ($user->is_admin == 1 || $user->id !== $post->user_id) {
+            if ($user->id !== $post->user_id) {
                 abort(403, 'Вы не являетесь владельцем этого поста и не можете его удалить');
             }
             $post->comments()->delete();

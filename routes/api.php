@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\HashtagController;
+use App\Http\Controllers\Api\PasswordResetController;
 use App\Http\Controllers\Api\PostsController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\UserSignUpUpdateController;
@@ -37,4 +38,5 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::post('/signup', [AuthController::class, 'signup']);
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/reset_password',[PasswordResetController::class,'resetPassword']);
 

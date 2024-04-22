@@ -35,7 +35,7 @@ export default function DefaultLayout() {
   return (
     <div className="flex ">
       {!hideSidebar &&
-      <aside className="fixed top-0 flex flex-col gap-[49px] px-[80px] py-10 border-r border-gray-200 h-screen">
+      <aside className="fixed top-0 flex flex-col gap-[39px] px-[80px] py-10 border-r border-gray-200 h-screen">
 
         <Link to="/" className="font-rustogram font-bold text-[40px] py-2 hover:text-gray">Rustogram</Link>
 

@@ -16,7 +16,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command(DeleteStoriesCommand::class)->daily();
+        $schedule->command(DeleteStoriesCommand::class)->runInBackground()->daily();
     }
 
     /**

@@ -257,6 +257,13 @@ export default function Messages() {
     scrollToBottom();
   }, [messages]);
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
   return (
     <main className="flex">
       <section className="flex flex-col gap-6 border-r p-10 h-screen">
@@ -273,7 +280,7 @@ export default function Messages() {
                 className="flex items-center rounded-xl cursor-pointer w-[300px] h-[53px] p-3 gap-4 font-roboto text-l bg-gray-200"
                 onClick={() => handleSearchStartClick(searchRes.id)}
               >
-                {searchRes.avatar !== null ? <img src={searchRes.avatar} alt="" /> : <img src="../../src/media/icons/user.png" alt="" />}
+                {searchRes.avatar !== null ? <img src={searchRes.avatar} className="w-[41px] h-[41px] rounded-full" alt="" /> : <img src="../../src/media/icons/user.png" alt="" />}
                 <p>{searchRes.name}</p>
               </div>
             ))}
@@ -335,7 +342,7 @@ export default function Messages() {
           </Link>
           <h2 className="font-roboto text-2xl font-bold">Чаты</h2>
           {user.avatar !== null ? (
-            <img src={user.avatar} alt="" className="rounded-full h-[37px] w-[37px]" />
+            <img src={user.avatar} alt="" className="rounded-full h-[51px] w-[51px]" />
           ) : (
             <div className="flex justify-center items-center rounded-full h-[70px] w-[70px] bg-gray-200">
               <img src="../../src/media/icons/user.png" alt="" className="object-cover h-[48px] w-[47px]" />
@@ -348,7 +355,7 @@ export default function Messages() {
           <div className="flex justify-center border-b-2 p-10 w-full">
             <div className="flex items-center gap-4 bg-gray-200 px-5 py-3 rounded-xl">
               {selectedUser.avatar !== null ? (
-                <img src={selectedUser.avatar} alt="" className="rounded-full h-[37px] w-[37px]" />
+                <img src={selectedUser.avatar} alt="" className="rounded-full h-[51px] w-[51px]" />
               ) : (
                 <div className="flex justify-center items-center rounded-full h-[70px] w-[70px] bg-gray-200">
                   <img src="../../src/media/icons/user.png" alt="" className="object-cover h-[48px] w-[47px]" />
@@ -384,7 +391,8 @@ export default function Messages() {
                     e.preventDefault();
                     openModal(message);
                   }}
-                  className={message.owner_id == user.id ? 'ml-auto mr-5 font-roboto text-white p-3 rounded-xl text-xl bg-[#534CA5] w-max' : 'mr-auto ml-5 font-roboto text-white p-3 rounded-xl text-xl bg-[#547B84] w-max'}
+                  className={message.owner_id == user.id ? 'ml-auto mr-5 font-roboto text-white p-3 rounded-xl text-xl bg-[#534CA5] w-max max-w-[300px] break-normal mb-4' : 'mr-auto ml-5 font-roboto text-white p-3 rounded-xl text-xl bg-[#547B84] w-max max-w-[300px] break-normal mb-4'}
+                  style={{ maxHeight: "200px", overflowWrap: "break-word" }}
                 >
                   {message.message}
                 </div>
@@ -431,7 +439,7 @@ export default function Messages() {
             <div className="flex items-center w-[483px] bg-gray-200 py-1 px-4 rounded-3xl mb-2 ">
               <div className="flex-grow">
                 <input type="text" className="border rounded-md py-2 px-4 w-full bg-transparent" value={newMessage}
-                       onChange={(e) => setNewMessage(e.target.value)} placeholder="Введите текст сообщения..." />
+                       onChange={(e) => setNewMessage(e.target.value)} placeholder="Введите текст сообщения..." onKeyDown={handleKeyDown} />
               </div>
               <button onClick={sendMessage}>
                 <SendIcon />

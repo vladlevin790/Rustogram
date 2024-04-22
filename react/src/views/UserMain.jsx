@@ -302,8 +302,8 @@ export default function UserMain() {
         )}
       </header>
       <div className="flex gap-20 justify-center border-b w-[1299px] mb-6">
-        <button className="mb-2 font-roboto text-3xl" onClick={()=>setCurrentTab('myFeed')}>Моя лента</button>
-        <button className="mb-2 font-roboto text-3xl" onClick={()=>setCurrentTab('recommendations')}>Рекомендации</button>
+        <button className={currentTab == "myFeed" ? 'mb-2 font-roboto text-3xl text-black' : 'mb-2 font-roboto text-3xl text-gray-300 transition-all' } onClick={()=>setCurrentTab('myFeed')}>Моя лента</button>
+        <button className={currentTab == "recommendations" ? 'mb-2 font-roboto text-3xl text-black' : 'mb-2 font-roboto text-3xl text-gray-300 transition-all' } onClick={()=>setCurrentTab('recommendations')}>Рекомендации</button>
       </div>
       <main>
         {postsData.map(post => (

@@ -22,6 +22,8 @@ export default function Profile() {
   const avatarRef = useRef();
   const birthDayRef = useRef();
   const genderRef = useRef();
+  const oldEmailRef = useRef();
+  const [currentEmail, setCurrentEmail] = useState('');
   const { user, setUser } = useStateContext();
   const [selectedPost, setSelectedPost] = useState(null);
   const [likesData, setLikesData] = useState([]);
@@ -164,16 +166,17 @@ export default function Profile() {
       formData.append('image_path', storyImage);
       formData.append('video_path', storyVideo);
       formData.append('description', storyDescription);
+      console.log(formData.get('image_path'))
       const response = await axiosClient.post('/stories/create', formData);
       if (response.data.Success) {
         toast.success('История успешно создана');
         setIsCreateStory(false);
         fetchDataStories();
       } else {
-        toast.error('Произошла ошибка при создании истории');
+        toast.error('Произошла ошибка при создании истории (если вы пытаетесь загрузить видео, то они в разработке)');
       }
     } catch (error) {
-      toast.error('Произошла ошибка при создании истории');
+      toast.error('Произошла ошибка при создании истории (если вы пытаетесь загрузить видео, то они в разработке)');
     }
   };
 
@@ -219,28 +222,37 @@ export default function Profile() {
     return formattedTimeString;
   };
 
+
+
+  useEffect(() => {
+    setCurrentEmail(user.email || '');
+  }, [user.email]);
+
   const handleSubmit = async e => {
     e.preventDefault();
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('name', nameRef.current.value);
-      formDataToSend.append('email', emailRef.current.value);
-      formDataToSend.append('bio', bioRef.current.value);
-      formDataToSend.append('password', passwordRef.current.value);
-      formDataToSend.append('birthday',birthDayRef.current.value);
-      formDataToSend.append('gender', genderRef.current.value);
-      if (avatarRef.current.files[0]) {
-        formDataToSend.append('avatar', avatarRef.current.files[0]);
-      }
+      const newEmail = emailRef.current.value;
+      const oldEmail = oldEmailRef.current.value;
+      if (oldEmail !== currentEmail) toast("Это не ваша Старая эллектронная почта", { style: { background: "#FDA0A0", fontFamily: "Roboto", fontSize: '20px', color: 'white' } });
+        const formDataToSend = new FormData();
+        formDataToSend.append('name', nameRef.current.value);
+        formDataToSend.append('email', oldEmail == currentEmail ? newEmail : '');
+        formDataToSend.append('bio', bioRef.current.value);
+        formDataToSend.append('birthday', birthDayRef.current.value);
+        formDataToSend.append('gender', genderRef.current.value);
+        if (avatarRef.current.files[0]) {
+          formDataToSend.append('avatar', avatarRef.current.files[0]);
+        }
 
-      await axiosClient.post('/user_profile/edit', formDataToSend);
-      setIsModal(false);
-      await axiosClient.get("/user_profile").then(({ data }) => {
-        setUser(data);
-      });
-      toast("Вы успешно обновили аккаунт",{style:{background:"#71D87B", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
+        await axiosClient.post('/user_profile/edit', formDataToSend);
+        setIsModal(false);
+        await axiosClient.get("/user_profile").then(({ data }) => {
+          setUser(data);
+        });
+        toast("Вы успешно обновили аккаунт", { style: { background: "#71D87B", fontFamily: "Roboto", fontSize: '20px', color: 'white' } });
     } catch (error) {
-      toast("Что-то пошло не так",{style:{background:"#FDA0A0", fontFamily:"Roboto", fontSize:'20px', color:'white'}})
+      console.log(error);
+      toast("Что-то пошло не так", { style: { background: "#FDA0A0", fontFamily: "Roboto", fontSize: '20px', color: 'white' } });
     }
   };
 
@@ -248,7 +260,6 @@ export default function Profile() {
     setSelectedStory(story);
     setCurrentStoryIndex(index);
   };
-
 
   const postUser = postsData.filter(post => post.user.id === user.id);
   const filteredStories = storyData.filter(story => story.user.id === user.id);
@@ -427,6 +438,16 @@ export default function Profile() {
                       className="mt-1 block w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-12 bg-gray-100 p-2 transition hover:bg-gray-200 hover:placeholder:text-gray-900"
                     />
                   </label>
+                  <label htmlFor="oldEmail" className="block mb-4 font-roboto font-weight-bolder text-xl">
+                    Предыдущая Эллектронная почта
+                    <input
+                      type="email"
+                      placeholder="Эллектронная почта"
+                      id="oldEmail"
+                      ref={oldEmailRef}
+                      className="mt-1 block w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-12 bg-gray-100 p-2 transition hover:bg-gray-200 hover:placeholder:text-gray-900"
+                    />
+                  </label>
                   <label htmlFor="email" className="block mb-4 font-roboto font-weight-bolder text-xl">
                     Изменить Электронную почту
                     <input
@@ -434,16 +455,6 @@ export default function Profile() {
                       placeholder="Эллектронная почта"
                       id="email"
                       ref={emailRef}
-                      className="mt-1 block w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-12 bg-gray-100 p-2 transition hover:bg-gray-200 hover:placeholder:text-gray-900"
-                    />
-                  </label>
-                  <label htmlFor="password" className="block mb-4 font-roboto font-weight-bolder text-xl">
-                    Пароль
-                    <input
-                      type="password"
-                      placeholder="Пароль"
-                      id="password"
-                      ref={passwordRef}
                       className="mt-1 block w-full rounded border-gray-300 focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 h-12 bg-gray-100 p-2 transition hover:bg-gray-200 hover:placeholder:text-gray-900"
                     />
                   </label>
@@ -498,10 +509,12 @@ export default function Profile() {
         </div>
         <div className="flex flex-col ml-9 mt-5">
           <h2 className="font-bold font-roboto text-4xl mb-2">{user.name}</h2>
-          <p className="font-semibold font-roboto text-3xl cursor-pointer" onClick={openFollowersModal}>Подписчиков: {subscriptionData ? subscriptionData.subscriptions_count || 0 : 0}</p>
+          <p className="font-semibold font-roboto text-3xl cursor-pointer"
+             onClick={openFollowersModal}>Подписчиков: {subscriptionData ? subscriptionData.subscriptions_count || 0 : 0}</p>
           {followersModalOpen && (
-            <div className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center" onClick={(e) => {
-              if (e.target === e.currentTarget) {
+            <div className="fixed inset-0 overflow-y-auto bg-gray-500 bg-opacity-75 flex items-center justify-center"
+                 onClick={(e) => {
+                   if (e.target === e.currentTarget) {
                 setFollowersModalOpen(false);
               }
             }}>

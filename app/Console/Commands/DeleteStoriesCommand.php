@@ -27,7 +27,6 @@ class DeleteStoriesCommand extends Command
                 $videoPath = str_replace('http://localhost:8000/storage/', 'public/', $story->video_path);
                 Storage::delete($videoPath);
             }
-
             $story->delete();
         }
 

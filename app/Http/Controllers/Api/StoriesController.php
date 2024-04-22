@@ -72,10 +72,11 @@ class StoriesController extends Controller
 
     public function createStory(Request $request){
         try {
+            Log::info($request);
             $user = Auth::user();
             $data = $request->validate([
                 'image_path' => 'nullable|image|mimes:jpeg,png,jpg,gif',
-                'video_path' => 'nullable|string',
+                'video_path' => 'nullable|string', // TODO:сделать как в рилсах
                 'description' => 'nullable|string',
             ]);
             if ($request->hasFile('image_path')) {
@@ -89,6 +90,7 @@ class StoriesController extends Controller
             $user->stories()->create($data);
             return response()->json(['Success'=>true,'status'=>200]);
         } catch (\Exception $e) {
+            Log::info($e->getMessage());
             return response()->json(['Success'=>false]);
         }
     }

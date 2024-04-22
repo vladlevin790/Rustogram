@@ -16,9 +16,9 @@ return new class extends Migration
         Schema::create('stories', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained('users');
-            $table->string('image_path');
-            $table->string('video_path');
-            $table->text('description');
+            $table->string('image_path')->nullable();
+            $table->string('video_path')->nullable();
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }
